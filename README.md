@@ -1,3 +1,3 @@
 # Postman-Integration
 
-UPDATE 5
+UPDATE 6
