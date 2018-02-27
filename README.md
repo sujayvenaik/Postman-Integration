@@ -1,3 +1,3 @@
 # Postman-Integration
 
-UPDATE 10
+UPDATE 90
