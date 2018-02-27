@@ -1,3 +1,3 @@
 # Postman-Integration
 
-UPDATE 100
+UPDATE 0
