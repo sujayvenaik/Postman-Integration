@@ -1,3 +1,3 @@
 # Postman-Integration
 
-UPDATE .
+UPDATE 12345
