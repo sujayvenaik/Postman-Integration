@@ -1,5 +1,5 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.avas = f()}})(function(){var define,module,exports;return (function(){function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s}return e})()({1:[function(require,module,exports){
-module.exports = {
+Converter = {
   convert: require('./lib/wrapper.js').convert,
   validate: require('./lib/wrapper.js').validate,
 }
@@ -215,7 +215,8 @@ const parse = {
 module.exports = parse;
 
 },{"js-yaml":112}],4:[function(require,module,exports){
-var 	_ = require('lodash'),
+var uuidv4 = require('uuid/v4'),
+		_ = require('lodash'),
 		postmanSDK = require('postman-collection'),
 		jsf = require('json-schema-faker'),
 		async = require('async'),
@@ -333,7 +334,8 @@ var util = {
 		 * @returns {String} 
 		 */
 		 generateId: function (){
-			return '1234567890';
+			// return uuid.v4();
+			return uuidv4();
 		 },
 
 		/**
@@ -584,7 +586,7 @@ var util = {
 		}
 }
 module.exports = util;
-},{"async":8,"json-schema-faker":142,"lodash":171,"postman-collection":184}],5:[function(require,module,exports){
+},{"async":8,"json-schema-faker":142,"lodash":171,"postman-collection":184,"uuid/v4":283}],5:[function(require,module,exports){
 const converter = require('./convert.js');
 const parse = require('./parse.js');
 const raml = require('raml-parser');
@@ -61868,7 +61870,7 @@ function onceStrict (fn) {
   return f
 }
 
-},{"wrappy":281}],182:[function(require,module,exports){
+},{"wrappy":284}],182:[function(require,module,exports){
 'use strict';
 
 var format = require('format-util');
@@ -100776,7 +100778,7 @@ sanitizeHtml.simpleTransform = function(newTagName, newAttribs, merge) {
   };
 };
 
-},{"htmlparser2":82,"lodash.escaperegexp":170,"srcset":271,"xtend":282}],270:[function(require,module,exports){
+},{"htmlparser2":82,"lodash.escaperegexp":170,"srcset":271,"xtend":285}],270:[function(require,module,exports){
 exports = module.exports = SemVer;
 
 // The debug function is excluded entirely from the minified version.
@@ -103908,6 +103910,49 @@ var UriTemplate = (function () {
 module.exports = require('util').deprecate;
 
 },{"util":undefined}],281:[function(require,module,exports){
+arguments[4][221][0].apply(exports,arguments)
+},{"dup":221}],282:[function(require,module,exports){
+// Unique ID creation requires a high quality random # generator.  In node.js
+// this is pretty straight-forward - we use the crypto API.
+
+var crypto = require('crypto');
+
+module.exports = function nodeRNG() {
+  return crypto.randomBytes(16);
+};
+
+},{"crypto":undefined}],283:[function(require,module,exports){
+var rng = require('./lib/rng');
+var bytesToUuid = require('./lib/bytesToUuid');
+
+function v4(options, buf, offset) {
+  var i = buf && offset || 0;
+
+  if (typeof(options) == 'string') {
+    buf = options === 'binary' ? new Array(16) : null;
+    options = null;
+  }
+  options = options || {};
+
+  var rnds = options.random || (options.rng || rng)();
+
+  // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
+  rnds[6] = (rnds[6] & 0x0f) | 0x40;
+  rnds[8] = (rnds[8] & 0x3f) | 0x80;
+
+  // Copy bytes to buffer, if provided
+  if (buf) {
+    for (var ii = 0; ii < 16; ++ii) {
+      buf[i + ii] = rnds[ii];
+    }
+  }
+
+  return buf || bytesToUuid(rnds);
+}
+
+module.exports = v4;
+
+},{"./lib/bytesToUuid":281,"./lib/rng":282}],284:[function(require,module,exports){
 // Returns a wrapper function that returns a wrapped callback
 // The wrapper function should do some stuff, and return a
 // presumably different callback function.
@@ -103942,7 +103987,7 @@ function wrappy (fn, cb) {
   }
 }
 
-},{}],282:[function(require,module,exports){
+},{}],285:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
