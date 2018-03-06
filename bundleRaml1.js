@@ -17,8 +17,8 @@ Converter = {
         }, function(err, results) {
             console.log(results);
             // results is now equal to: {one: 1, two: 2}
+            console.log('Finish');
         });
-        console.log('Ho');
     }
 }
 },{"async":2}],2:[function(require,module,exports){
