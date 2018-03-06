@@ -2,7 +2,8 @@
 Converter = {
   convert: require('./lib/wrapper.js').convert,
   validate: require('./lib/wrapper.js').validate,
-}
+};
+
 },{"./lib/wrapper.js":5}],2:[function(require,module,exports){
 var postmanSDK = require('postman-collection'),
 		util = require('./util.js'),
@@ -66,7 +67,6 @@ var converter = {
     	_.forEach(resource.methods, (req) => {
 					req.securedBy = util.modifyAuthTypes(req.securedBy);
           var item = new Item({
-            		// id: util.generateId(),
                 name: itemGroup.name,
                 request: {
 									url: resourceUri.toString(),
@@ -125,7 +125,6 @@ var converter = {
       // Binding the current state of the collection to the calling object   
       this.POSTMAN.collection = new Collection({
 							info: {
-									// id: util.generateId(),
 									name: this.RAML.title || '',
 									version: this.RAML.version,
 							},
@@ -329,15 +328,6 @@ var util = {
 		},
 
 		/**
-		 * Generates Unique uuid in the v4 format
-		 * @returns {String} 
-		 */
-		//  generateId: function (){
-		// 	// return uuid.v4();
-		// 	return uuidv4();
-		//  },
-
-		/**
 		 * Generates timestamp
 		 * @returns {String}
 		 */
@@ -396,7 +386,6 @@ var util = {
 				_.forOwn(uriParameters, (val, param) => {
 					  modifiedUri = modifiedUri.replace('{' + param + '}', ':' + param);
 						var variable = new Variable({
-									// 'id':	this.generateId(),
 									'name': param,
 									'value': '',
 									'type': val.type,
@@ -475,7 +464,6 @@ var util = {
 			let modifiedPostmanItemObj = postmanItemObj;
 			_.forOwn(requestResponses, (responseValue, responseCode) => {			
 					var response = new Response({
-								// id: util.generateId(),
 								name: responseCode.toString(),
 								code: Number(responseCode),
 								header: util.getResponseHeaders(responseValue),																																	
