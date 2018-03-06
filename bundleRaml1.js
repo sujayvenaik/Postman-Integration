@@ -13,9 +13,9 @@ Converter = {
         _ = require('lodash'),
         path = require('path'),
         sdk = require('postman-collection'),
+        raml = require('raml-parser'),
         validator = require('postman_validator'),
-        async = require('async'),
-        raml = require('raml-parser');
+        async = require('async');
 
 module.exports = function(){
     console.log('done');
