@@ -5,8 +5,7 @@ Converter = {
 }
 
 },{"./lib/wrapper.js":5}],2:[function(require,module,exports){
-var fs = require('fs'),
-		uuid = require('node-uuid'),
+var uuid = require('node-uuid'),
     path = require('path'),
 		postmanSDK = require('postman-collection'),
 		validator = require('postman_validator'),
@@ -169,7 +168,7 @@ var converter = {
 }
 
 module.exports = converter;
-},{"./util.js":4,"async":14,"fs":undefined,"json-schema-faker":150,"lodash":179,"node-uuid":187,"path":undefined,"postman-collection":193,"postman_validator":238,"raml-parser":251}],3:[function(require,module,exports){
+},{"./util.js":4,"async":14,"json-schema-faker":150,"lodash":179,"node-uuid":187,"path":undefined,"postman-collection":193,"postman_validator":238,"raml-parser":251}],3:[function(require,module,exports){
 const yaml = require('js-yaml');
 
 const parse = {
