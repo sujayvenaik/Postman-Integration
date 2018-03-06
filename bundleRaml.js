@@ -3,33 +3,16 @@ Converter = {
   convert: require('./lib/wrapper.js').convert,
   validate: require('./lib/wrapper.js').validate,
 }
-
 },{"./lib/wrapper.js":5}],2:[function(require,module,exports){
-var path = require('path'),
-		postmanSDK = require('postman-collection'),
-		validator = require('postman_validator'),
+var postmanSDK = require('postman-collection'),
 		util = require('./util.js'),
 		jsf = require('json-schema-faker'),
 		Collection = postmanSDK.Collection,
-		FormParam = postmanSDK.FormParam,
-    Header = postmanSDK.Header,
     Item = postmanSDK.Item, 
     ItemGroup = postmanSDK.ItemGroup,
     Request = postmanSDK.Request,
-    RequestBody = postmanSDK.RequestBody,
-    Response = postmanSDK.Response,  
-    RequestAuth = postmanSDK.RequestAuth,
-		Property = postmanSDK.Property,
-		PropertyList = postmanSDK.PropertyList,
-    QueryParam = postmanSDK.QueryParam,
 		Url = postmanSDK.Url,
-		Variable = postmanSDK.Variable,
-		VariableList = postmanSDK.VariableList,
-    Validator = require('postman_validator');
-    raml = require('raml-parser'),
-    _ = require('lodash'),
-		async = require('async');
-		
+    _ = require('lodash');
 
 var converter = {
 
@@ -167,7 +150,7 @@ var converter = {
 }
 
 module.exports = converter;
-},{"./util.js":4,"async":14,"json-schema-faker":150,"lodash":179,"path":undefined,"postman-collection":192,"postman_validator":237,"raml-parser":250}],3:[function(require,module,exports){
+},{"./util.js":4,"json-schema-faker":142,"lodash":171,"postman-collection":184}],3:[function(require,module,exports){
 const yaml = require('js-yaml');
 
 const parse = {
@@ -231,8 +214,8 @@ const parse = {
 
 module.exports = parse;
 
-},{"js-yaml":119}],4:[function(require,module,exports){
-var 	_ = require('lodash'),
+},{"js-yaml":112}],4:[function(require,module,exports){
+var _ = require('lodash'),
 		postmanSDK = require('postman-collection'),
 		jsf = require('json-schema-faker'),
 		async = require('async'),
@@ -601,9 +584,10 @@ var util = {
 		}
 }
 module.exports = util;
-},{"async":14,"json-schema-faker":150,"lodash":179,"postman-collection":192}],5:[function(require,module,exports){
+},{"async":8,"json-schema-faker":142,"lodash":171,"postman-collection":184}],5:[function(require,module,exports){
 const converter = require('./convert.js');
 const parse = require('./parse.js');
+const raml = require('raml-parser');
 
 
 var wrap =  {
@@ -680,7 +664,6 @@ module.exports = {
 
 		if(status.result){
 			if(typeof data == 'string'){
-				console.log("here i am");
 				wrap.parseString(ramlSpec, (errorMessage, collection) => {
 					if(errorMessage){
 						console.log("tuhin");
@@ -825,7 +808,7 @@ module.exports = {
 		}
 	},
 }
-},{"./convert.js":2,"./parse.js":3}],6:[function(require,module,exports){
+},{"./convert.js":2,"./parse.js":3,"raml-parser":238}],6:[function(require,module,exports){
 /**
  * marked - a markdown parser
  * Copyright (c) 2011-2014, Christopher Jeffrey. (MIT Licensed)
@@ -2145,5709 +2128,6 @@ if (typeof module !== 'undefined' && typeof exports === 'object') {
 }());
 
 },{}],7:[function(require,module,exports){
-require("./json-schema-draft-01");
-require("./json-schema-draft-02");
-require("./json-schema-draft-03");
-},{"./json-schema-draft-01":8,"./json-schema-draft-02":9,"./json-schema-draft-03":10}],8:[function(require,module,exports){
-/**
- * json-schema-draft-01 Environment
- * 
- * @fileOverview Implementation of the first revision of the JSON Schema specification draft.
- * @author <a href="mailto:gary.court@gmail.com">Gary Court</a>
- * @version 1.7.1
- * @see http://github.com/garycourt/JSV
- */
-
-/*
- * Copyright 2010 Gary Court. All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without modification, are
- * permitted provided that the following conditions are met:
- * 
- *    1. Redistributions of source code must retain the above copyright notice, this list of
- *       conditions and the following disclaimer.
- * 
- *    2. Redistributions in binary form must reproduce the above copyright notice, this list
- *       of conditions and the following disclaimer in the documentation and/or other materials
- *       provided with the distribution.
- * 
- * THIS SOFTWARE IS PROVIDED BY GARY COURT ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL GARY COURT OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
- * The views and conclusions contained in the software and documentation are those of the
- * authors and should not be interpreted as representing official policies, either expressed
- * or implied, of Gary Court or the JSON Schema specification.
- */
-
-/*jslint white: true, sub: true, onevar: true, undef: true, eqeqeq: true, newcap: true, immed: true, indent: 4 */
-/*global require */
-
-(function () {
-	var O = {},
-		JSV = require('./jsv').JSV,
-		ENVIRONMENT,
-		TYPE_VALIDATORS,
-		SCHEMA,
-		HYPERSCHEMA,
-		LINKS;
-	
-	TYPE_VALIDATORS = {
-		"string" : function (instance, report) {
-			return instance.getType() === "string";
-		},
-		
-		"number" : function (instance, report) {
-			return instance.getType() === "number";
-		},
-		
-		"integer" : function (instance, report) {
-			return instance.getType() === "number" && instance.getValue() % 1 === 0;
-		},
-		
-		"boolean" : function (instance, report) {
-			return instance.getType() === "boolean";
-		},
-		
-		"object" : function (instance, report) {
-			return instance.getType() === "object";
-		},
-		
-		"array" : function (instance, report) {
-			return instance.getType() === "array";
-		},
-		
-		"null" : function (instance, report) {
-			return instance.getType() === "null";
-		},
-		
-		"any" : function (instance, report) {
-			return true;
-		}
-	};
-	
-	ENVIRONMENT = new JSV.Environment();
-	ENVIRONMENT.setOption("defaultFragmentDelimiter", ".");
-	ENVIRONMENT.setOption("defaultSchemaURI", "http://json-schema.org/schema#");  //updated later
-	
-	SCHEMA = ENVIRONMENT.createSchema({
-		"$schema" : "http://json-schema.org/hyper-schema#",
-		"id" : "http://json-schema.org/schema#",
-		"type" : "object",
-		
-		"properties" : {
-			"type" : {
-				"type" : ["string", "array"],
-				"items" : {
-					"type" : ["string", {"$ref" : "#"}]
-				},
-				"optional" : true,
-				"uniqueItems" : true,
-				"default" : "any",
-				
-				"parser" : function (instance, self) {
-					var parser;
-					
-					if (instance.getType() === "string") {
-						return instance.getValue();
-					} else if (instance.getType() === "object") {
-						return instance.getEnvironment().createSchema(
-							instance, 
-							self.getEnvironment().findSchema(self.resolveURI("#"))
-						);
-					} else if (instance.getType() === "array") {
-						parser = self.getValueOfProperty("parser");
-						return JSV.mapArray(instance.getProperties(), function (prop) {
-							return parser(prop, self);
-						});
-					}
-					//else
-					return "any";
-				},
-			
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var requiredTypes = JSV.toArray(schema.getAttribute("type")),
-						x, xl, type, subreport, typeValidators;
-					
-					//for instances that are required to be a certain type
-					if (instance.getType() !== "undefined" && requiredTypes && requiredTypes.length) {
-						typeValidators = self.getValueOfProperty("typeValidators") || {};
-						
-						//ensure that type matches for at least one of the required types
-						for (x = 0, xl = requiredTypes.length; x < xl; ++x) {
-							type = requiredTypes[x];
-							if (JSV.isJSONSchema(type)) {
-								subreport = JSV.createObject(report);
-								subreport.errors = [];
-								subreport.validated = JSV.clone(report.validated);
-								if (type.validate(instance, subreport, parent, parentSchema, name).errors.length === 0) {
-									return true;  //instance matches this schema
-								}
-							} else {
-								if (typeValidators[type] !== O[type] && typeof typeValidators[type] === "function") {
-									if (typeValidators[type](instance, report)) {
-										return true;  //type is valid
-									}
-								} else {
-									return true;  //unknown types are assumed valid
-								}
-							}
-						}
-						
-						//if we get to this point, type is invalid
-						report.addError(instance, schema, "type", "Instance is not a required type", requiredTypes);
-						return false;
-					}
-					//else, anything is allowed if no type is specified
-					return true;
-				},
-				
-				"typeValidators" : TYPE_VALIDATORS
-			},
-			
-			"properties" : {
-				"type" : "object",
-				"additionalProperties" : {"$ref" : "#"},
-				"optional" : true,
-				"default" : {},
-				
-				"parser" : function (instance, self, arg) {
-					var env = instance.getEnvironment(),
-						selfEnv = self.getEnvironment();
-					if (instance.getType() === "object") {
-						if (arg) {
-							return env.createSchema(instance.getProperty(arg), selfEnv.findSchema(self.resolveURI("#")));
-						} else {
-							return JSV.mapObject(instance.getProperties(), function (instance) {
-								return env.createSchema(instance, selfEnv.findSchema(self.resolveURI("#")));
-							});
-						}
-					}
-					//else
-					return {};
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var propertySchemas, key;
-					//this attribute is for object type instances only
-					if (instance.getType() === "object") {
-						//for each property defined in the schema
-						propertySchemas = schema.getAttribute("properties");
-						for (key in propertySchemas) {
-							if (propertySchemas[key] !== O[key] && propertySchemas[key]) {
-								//ensure that instance property is valid
-								propertySchemas[key].validate(instance.getProperty(key), report, instance, schema, key);
-							}
-						}
-					}
-				}
-			},
-			
-			"items" : {
-				"type" : [{"$ref" : "#"}, "array"],
-				"items" : {"$ref" : "#"},
-				"optional" : true,
-				"default" : {},
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "object") {
-						return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
-					} else if (instance.getType() === "array") {
-						return JSV.mapArray(instance.getProperties(), function (instance) {
-							return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
-						});
-					}
-					//else
-					return instance.getEnvironment().createEmptySchema();
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var properties, items, x, xl, itemSchema, additionalProperties;
-					
-					if (instance.getType() === "array") {
-						properties = instance.getProperties();
-						items = schema.getAttribute("items");
-						additionalProperties = schema.getAttribute("additionalProperties");
-						
-						if (JSV.typeOf(items) === "array") {
-							for (x = 0, xl = properties.length; x < xl; ++x) {
-								itemSchema = items[x] || additionalProperties;
-								if (itemSchema !== false) {
-									itemSchema.validate(properties[x], report, instance, schema, x);
-								} else {
-									report.addError(instance, schema, "additionalProperties", "Additional items are not allowed", itemSchema);
-								}
-							}
-						} else {
-							itemSchema = items || additionalProperties;
-							for (x = 0, xl = properties.length; x < xl; ++x) {
-								itemSchema.validate(properties[x], report, instance, schema, x);
-							}
-						}
-					}
-				}
-			},
-			
-			"optional" : {
-				"type" : "boolean",
-				"optional" : true,
-				"default" : false,
-				
-				"parser" : function (instance, self) {
-					return !!instance.getValue();
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					if (instance.getType() === "undefined" && !schema.getAttribute("optional")) {
-						report.addError(instance, schema, "optional", "Property is required", false);
-					}
-				},
-				
-				"validationRequired" : true
-			},
-			
-			"additionalProperties" : {
-				"type" : [{"$ref" : "#"}, "boolean"],
-				"optional" : true,
-				"default" : {},
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "object") {
-						return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
-					} else if (instance.getType() === "boolean" && instance.getValue() === false) {
-						return false;
-					}
-					//else
-					return instance.getEnvironment().createEmptySchema();
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var additionalProperties, propertySchemas, properties, key;
-					//we only need to check against object types as arrays do their own checking on this property
-					if (instance.getType() === "object") {
-						additionalProperties = schema.getAttribute("additionalProperties");
-						propertySchemas = schema.getAttribute("properties") || {};
-						properties = instance.getProperties();
-						for (key in properties) {
-							if (properties[key] !== O[key] && properties[key] && !propertySchemas[key]) {
-								if (JSV.isJSONSchema(additionalProperties)) {
-									additionalProperties.validate(properties[key], report, instance, schema, key);
-								} else if (additionalProperties === false) {
-									report.addError(instance, schema, "additionalProperties", "Additional properties are not allowed", additionalProperties);
-								}
-							}
-						}
-					}
-				}
-			},
-			
-			"requires" : {
-				"type" : ["string", {"$ref" : "#"}],
-				"optional" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "string") {
-						return instance.getValue();
-					} else if (instance.getType() === "object") {
-						return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var requires;
-					if (instance.getType() !== "undefined" && parent && parent.getType() !== "undefined") {
-						requires = schema.getAttribute("requires");
-						if (typeof requires === "string") {
-							if (parent.getProperty(requires).getType() === "undefined") {
-								report.addError(instance, schema, "requires", 'Property requires sibling property "' + requires + '"', requires);
-							}
-						} else if (JSV.isJSONSchema(requires)) {
-							requires.validate(parent, report);  //WATCH: A "requires" schema does not support the "requires" attribute
-						}
-					}
-				}
-			},
-			
-			"minimum" : {
-				"type" : "number",
-				"optional" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var minimum, minimumCanEqual;
-					if (instance.getType() === "number") {
-						minimum = schema.getAttribute("minimum");
-						minimumCanEqual = schema.getAttribute("minimumCanEqual");
-						if (typeof minimum === "number" && (instance.getValue() < minimum || (minimumCanEqual === false && instance.getValue() === minimum))) {
-							report.addError(instance, schema, "minimum", "Number is less than the required minimum value", minimum);
-						}
-					}
-				}
-			},
-			
-			"maximum" : {
-				"type" : "number",
-				"optional" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var maximum, maximumCanEqual;
-					if (instance.getType() === "number") {
-						maximum = schema.getAttribute("maximum");
-						maximumCanEqual = schema.getAttribute("maximumCanEqual");
-						if (typeof maximum === "number" && (instance.getValue() > maximum || (maximumCanEqual === false && instance.getValue() === maximum))) {
-							report.addError(instance, schema, "maximum", "Number is greater than the required maximum value", maximum);
-						}
-					}
-				}
-			},
-			
-			"minimumCanEqual" : {
-				"type" : "boolean",
-				"optional" : true,
-				"requires" : "minimum",
-				"default" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "boolean") {
-						return instance.getValue();
-					}
-					//else
-					return true;
-				}
-			},
-			
-			"maximumCanEqual" : {
-				"type" : "boolean",
-				"optional" : true,
-				"requires" : "maximum",
-				"default" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "boolean") {
-						return instance.getValue();
-					}
-					//else
-					return true;
-				}
-			},
-			
-			"minItems" : {
-				"type" : "integer",
-				"optional" : true,
-				"minimum" : 0,
-				"default" : 0,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-					//else
-					return 0;
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var minItems;
-					if (instance.getType() === "array") {
-						minItems = schema.getAttribute("minItems");
-						if (typeof minItems === "number" && instance.getProperties().length < minItems) {
-							report.addError(instance, schema, "minItems", "The number of items is less than the required minimum", minItems);
-						}
-					}
-				}
-			},
-			
-			"maxItems" : {
-				"type" : "integer",
-				"optional" : true,
-				"minimum" : 0,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var maxItems;
-					if (instance.getType() === "array") {
-						maxItems = schema.getAttribute("maxItems");
-						if (typeof maxItems === "number" && instance.getProperties().length > maxItems) {
-							report.addError(instance, schema, "maxItems", "The number of items is greater than the required maximum", maxItems);
-						}
-					}
-				}
-			},
-			
-			"pattern" : {
-				"type" : "string",
-				"optional" : true,
-				"format" : "regex",
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "string") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var pattern;
-					try {
-						pattern = new RegExp(schema.getAttribute("pattern"));
-						if (instance.getType() === "string" && pattern && !pattern.test(instance.getValue())) {
-							report.addError(instance, schema, "pattern", "String does not match pattern", pattern.toString());
-						}
-					} catch (e) {
-						report.addError(instance, schema, "pattern", "Invalid pattern", e);
-					}
-				}
-			},
-			
-			"minLength" : {
-				"type" : "integer",
-				"optional" : true,
-				"minimum" : 0,
-				"default" : 0,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-					//else
-					return 0;
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var minLength;
-					if (instance.getType() === "string") {
-						minLength = schema.getAttribute("minLength");
-						if (typeof minLength === "number" && instance.getValue().length < minLength) {
-							report.addError(instance, schema, "minLength", "String is less than the required minimum length", minLength);
-						}
-					}
-				}
-			},
-			
-			"maxLength" : {
-				"type" : "integer",
-				"optional" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var maxLength;
-					if (instance.getType() === "string") {
-						maxLength = schema.getAttribute("maxLength");
-						if (typeof maxLength === "number" && instance.getValue().length > maxLength) {
-							report.addError(instance, schema, "maxLength", "String is greater than the required maximum length", maxLength);
-						}
-					}
-				}
-			},
-			
-			"enum" : {
-				"type" : "array",
-				"optional" : true,
-				"minItems" : 1,
-				"uniqueItems" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "array") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var enums, x, xl;
-					if (instance.getType() !== "undefined") {
-						enums = schema.getAttribute("enum");
-						if (enums) {
-							for (x = 0, xl = enums.length; x < xl; ++x) {
-								if (instance.equals(enums[x])) {
-									return true;
-								}
-							}
-							report.addError(instance, schema, "enum", "Instance is not one of the possible values", enums);
-						}
-					}
-				}
-			},
-			
-			"title" : {
-				"type" : "string",
-				"optional" : true
-			},
-			
-			"description" : {
-				"type" : "string",
-				"optional" : true
-			},
-			
-			"format" : {
-				"type" : "string",
-				"optional" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "string") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var format, formatValidators;
-					if (instance.getType() === "string") {
-						format = schema.getAttribute("format");
-						formatValidators = self.getValueOfProperty("formatValidators");
-						if (typeof format === "string" && formatValidators[format] !== O[format] && typeof formatValidators[format] === "function" && !formatValidators[format].call(this, instance, report)) {
-							report.addError(instance, schema, "format", "String is not in the required format", format);
-						}
-					}
-				},
-				
-				"formatValidators" : {}
-			},
-			
-			"contentEncoding" : {
-				"type" : "string",
-				"optional" : true
-			},
-			
-			"default" : {
-				"type" : "any",
-				"optional" : true
-			},
-			
-			"maxDecimal" : {
-				"type" : "integer",
-				"optional" : true,
-				"minimum" : 0,
-								
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var maxDecimal, decimals;
-					if (instance.getType() === "number") {
-						maxDecimal = schema.getAttribute("maxDecimal");
-						if (typeof maxDecimal === "number") {
-							decimals = instance.getValue().toString(10).split('.')[1];
-							if (decimals && decimals.length > maxDecimal) {
-								report.addError(instance, schema, "maxDecimal", "The number of decimal places is greater than the allowed maximum", maxDecimal);
-							}
-						}
-					}
-				}
-			},
-			
-			"disallow" : {
-				"type" : ["string", "array"],
-				"items" : {"type" : "string"},
-				"optional" : true,
-				"uniqueItems" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "string" || instance.getType() === "array") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var disallowedTypes = JSV.toArray(schema.getAttribute("disallow")),
-						x, xl, key, typeValidators;
-					
-					//for instances that are required to be a certain type
-					if (instance.getType() !== "undefined" && disallowedTypes && disallowedTypes.length) {
-						typeValidators = self.getValueOfProperty("typeValidators") || {};
-						
-						//ensure that type matches for at least one of the required types
-						for (x = 0, xl = disallowedTypes.length; x < xl; ++x) {
-							key = disallowedTypes[x];
-							if (typeValidators[key] !== O[key] && typeof typeValidators[key] === "function") {
-								if (typeValidators[key](instance, report)) {
-									report.addError(instance, schema, "disallow", "Instance is a disallowed type", disallowedTypes);
-									return false;
-								}
-							} 
-							/*
-							else {
-								report.addError(instance, schema, "disallow", "Instance may be a disallowed type", disallowedTypes);
-								return false;
-							}
-							*/
-						}
-						
-						//if we get to this point, type is valid
-						return true;
-					}
-					//else, everything is allowed if no disallowed types are specified
-					return true;
-				},
-				
-				"typeValidators" : TYPE_VALIDATORS
-			},
-		
-			"extends" : {
-				"type" : [{"$ref" : "#"}, "array"],
-				"items" : {"$ref" : "#"},
-				"optional" : true,
-				"default" : {},
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "object") {
-						return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
-					} else if (instance.getType() === "array") {
-						return JSV.mapArray(instance.getProperties(), function (instance) {
-							return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
-						});
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var extensions = schema.getAttribute("extends"), x, xl;
-					if (extensions) {
-						if (JSV.isJSONSchema(extensions)) {
-							extensions.validate(instance, report, parent, parentSchema, name);
-						} else if (JSV.typeOf(extensions) === "array") {
-							for (x = 0, xl = extensions.length; x < xl; ++x) {
-								extensions[x].validate(instance, report, parent, parentSchema, name);
-							}
-						}
-					}
-				}
-			}
-		},
-		
-		"optional" : true,
-		"default" : {},
-		"fragmentResolution" : "dot-delimited",
-		
-		"parser" : function (instance, self) {
-			if (instance.getType() === "object") {
-				return instance.getEnvironment().createSchema(instance, self);
-			}
-		},
-		
-		"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-			var propNames = schema.getPropertyNames(), 
-				x, xl,
-				attributeSchemas = self.getAttribute("properties"),
-				validator;
-			
-			for (x in attributeSchemas) {
-				if (attributeSchemas[x] !== O[x] && attributeSchemas[x].getValueOfProperty("validationRequired")) {
-					JSV.pushUnique(propNames, x);
-				}
-			}
-			
-			for (x = 0, xl = propNames.length; x < xl; ++x) {
-				if (attributeSchemas[propNames[x]] !== O[propNames[x]]) {
-					validator = attributeSchemas[propNames[x]].getValueOfProperty("validator");
-					if (typeof validator === "function") {
-						validator(instance, schema, attributeSchemas[propNames[x]], report, parent, parentSchema, name);
-					}
-				}
-			}
-		},
-				
-		"initializer" : function (instance) {
-			var link, extension, extended;
-			
-			//if there is a link to a different schema, set reference
-			link = instance._schema.getLink("describedby", instance);
-			if (link && instance._schema._uri !== link) {
-				instance.setReference("describedby", link);
-			}
-			
-			//if instance has a URI link to itself, update it's own URI
-			link = instance._schema.getLink("self", instance);
-			if (JSV.typeOf(link) === "string") {
-				instance._uri = JSV.formatURI(link);
-			}
-			
-			//if there is a link to the full representation, set reference
-			link = instance._schema.getLink("full", instance);
-			if (link && instance._uri !== link) {
-				instance.setReference("full", link);
-			}
-			
-			//extend schema
-			extension = instance.getAttribute("extends");
-			if (JSV.isJSONSchema(extension)) {
-				extended = JSV.inherits(extension, instance, true);
-				instance = instance._env.createSchema(extended, instance._schema, instance._uri);
-			}
-			
-			return instance;
-		}
-	}, true, "http://json-schema.org/schema#");
-	
-	HYPERSCHEMA = ENVIRONMENT.createSchema(JSV.inherits(SCHEMA, ENVIRONMENT.createSchema({
-		"$schema" : "http://json-schema.org/hyper-schema#",
-		"id" : "http://json-schema.org/hyper-schema#",
-	
-		"properties" : {
-			"links" : {
-				"type" : "array",
-				"items" : {"$ref" : "links#"},
-				"optional" : true,
-				
-				"parser" : function (instance, self, arg) {
-					var links,
-						linkSchemaURI = self.getValueOfProperty("items")["$ref"],
-						linkSchema = self.getEnvironment().findSchema(linkSchemaURI),
-						linkParser = linkSchema && linkSchema.getValueOfProperty("parser");
-					arg = JSV.toArray(arg);
-					
-					if (typeof linkParser === "function") {
-						links = JSV.mapArray(instance.getProperties(), function (link) {
-							return linkParser(link, linkSchema);
-						});
-					} else {
-						links = JSV.toArray(instance.getValue());
-					}
-					
-					if (arg[0]) {
-						links = JSV.filterArray(links, function (link) {
-							return link["rel"] === arg[0];
-						});
-					}
-					
-					if (arg[1]) {
-						links = JSV.mapArray(links, function (link) {
-							var instance = arg[1],
-								href = link["href"];
-							href = href.replace(/\{(.+)\}/g, function (str, p1, offset, s) {
-								var value; 
-								if (p1 === "-this") {
-									value = instance.getValue();
-								} else {
-									value = instance.getValueOfProperty(p1);
-								}
-								return value !== undefined ? String(value) : "";
-							});
-							return href ? JSV.formatURI(instance.resolveURI(href)) : href;
-						});
-					}
-					
-					return links;
-				}
-			},
-			
-			"fragmentResolution" : {
-				"type" : "string",
-				"optional" : true,
-				"default" : "dot-delimited"
-			},
-			
-			"root" : {
-				"type" : "boolean",
-				"optional" : true,
-				"default" : false
-			},
-			
-			"readonly" : {
-				"type" : "boolean",
-				"optional" : true,
-				"default" : false
-			},
-			
-			"pathStart" : {
-				"type" : "string",
-				"optional" : true,
-				"format" : "uri",
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var pathStart;
-					if (instance.getType() !== "undefined") {
-						pathStart = schema.getAttribute("pathStart");
-						if (typeof pathStart === "string") {
-							//TODO: Find out what pathStart is relative to
-							if (instance.getURI().indexOf(pathStart) !== 0) {
-								report.addError(instance, schema, "pathStart", "Instance's URI does not start with " + pathStart, pathStart);
-							}
-						}
-					}
-				}
-			},
-			
-			"mediaType" : {
-				"type" : "string",
-				"optional" : true,
-				"format" : "media-type"
-			},
-			
-			"alternate" : {
-				"type" : "array",
-				"items" : {"$ref" : "#"},
-				"optional" : true
-			}
-		},
-		
-		"links" : [
-			{
-				"href" : "{$ref}",
-				"rel" : "full"
-			},
-			
-			{
-				"href" : "{$schema}",
-				"rel" : "describedby"
-			},
-			
-			{
-				"href" : "{id}",
-				"rel" : "self"
-			}
-		]//,
-		
-		//not needed as JSV.inherits does the job for us
-		//"extends" : {"$ref" : "http://json-schema.org/schema#"}
-	}, SCHEMA), true), true, "http://json-schema.org/hyper-schema#");
-	
-	ENVIRONMENT.setOption("defaultSchemaURI", "http://json-schema.org/hyper-schema#");
-	
-	LINKS = ENVIRONMENT.createSchema({
-		"$schema" : "http://json-schema.org/hyper-schema#",
-		"id" : "http://json-schema.org/links#",
-		"type" : "object",
-		
-		"properties" : {
-			"href" : {
-				"type" : "string"
-			},
-			
-			"rel" : {
-				"type" : "string"
-			},
-			
-			"method" : {
-				"type" : "string",
-				"default" : "GET",
-				"optional" : true
-			},
-			
-			"enctype" : {
-				"type" : "string",
-				"requires" : "method",
-				"optional" : true
-			},
-			
-			"properties" : {
-				"type" : "object",
-				"additionalProperties" : {"$ref" : "hyper-schema#"},
-				"optional" : true,
-				
-				"parser" : function (instance, self, arg) {
-					var env = instance.getEnvironment(),
-						selfEnv = self.getEnvironment(),
-						additionalPropertiesSchemaURI = self.getValueOfProperty("additionalProperties")["$ref"];
-					if (instance.getType() === "object") {
-						if (arg) {
-							return env.createSchema(instance.getProperty(arg), selfEnv.findSchema(self.resolveURI(additionalPropertiesSchemaURI)));
-						} else {
-							return JSV.mapObject(instance.getProperties(), function (instance) {
-								return env.createSchema(instance, selfEnv.findSchema(self.resolveURI(additionalPropertiesSchemaURI)));
-							});
-						}
-					}
-				}
-			}
-		},
-		
-		"parser" : function (instance, self) {
-			var selfProperties = self.getProperty("properties");
-			if (instance.getType() === "object") {
-				return JSV.mapObject(instance.getProperties(), function (property, key) {
-					var propertySchema = selfProperties.getProperty(key),
-						parser = propertySchema && propertySchema.getValueOfProperty("parser");
-					if (typeof parser === "function") {
-						return parser(property, propertySchema);
-					}
-					//else
-					return property.getValue();
-				});
-			}
-			return instance.getValue();
-		}
-	}, HYPERSCHEMA, "http://json-schema.org/links#");
-	
-	JSV.registerEnvironment("json-schema-draft-00", ENVIRONMENT);
-	JSV.registerEnvironment("json-schema-draft-01", JSV.createEnvironment("json-schema-draft-00"));
-	
-	if (!JSV.getDefaultEnvironmentID()) {
-		JSV.setDefaultEnvironmentID("json-schema-draft-01");
-	}
-	
-}());
-},{"./jsv":11}],9:[function(require,module,exports){
-/**
- * json-schema-draft-02 Environment
- * 
- * @fileOverview Implementation of the second revision of the JSON Schema specification draft.
- * @author <a href="mailto:gary.court@gmail.com">Gary Court</a>
- * @version 1.7.1
- * @see http://github.com/garycourt/JSV
- */
-
-/*
- * Copyright 2010 Gary Court. All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without modification, are
- * permitted provided that the following conditions are met:
- * 
- *    1. Redistributions of source code must retain the above copyright notice, this list of
- *       conditions and the following disclaimer.
- * 
- *    2. Redistributions in binary form must reproduce the above copyright notice, this list
- *       of conditions and the following disclaimer in the documentation and/or other materials
- *       provided with the distribution.
- * 
- * THIS SOFTWARE IS PROVIDED BY GARY COURT ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL GARY COURT OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
- * The views and conclusions contained in the software and documentation are those of the
- * authors and should not be interpreted as representing official policies, either expressed
- * or implied, of Gary Court or the JSON Schema specification.
- */
-
-/*jslint white: true, sub: true, onevar: true, undef: true, eqeqeq: true, newcap: true, immed: true, indent: 4 */
-/*global require */
-
-(function () {
-	var O = {},
-		JSV = require('./jsv').JSV,
-		ENVIRONMENT,
-		TYPE_VALIDATORS,
-		SCHEMA,
-		HYPERSCHEMA,
-		LINKS;
-	
-	TYPE_VALIDATORS = {
-		"string" : function (instance, report) {
-			return instance.getType() === "string";
-		},
-		
-		"number" : function (instance, report) {
-			return instance.getType() === "number";
-		},
-		
-		"integer" : function (instance, report) {
-			return instance.getType() === "number" && instance.getValue() % 1 === 0;
-		},
-		
-		"boolean" : function (instance, report) {
-			return instance.getType() === "boolean";
-		},
-		
-		"object" : function (instance, report) {
-			return instance.getType() === "object";
-		},
-		
-		"array" : function (instance, report) {
-			return instance.getType() === "array";
-		},
-		
-		"null" : function (instance, report) {
-			return instance.getType() === "null";
-		},
-		
-		"any" : function (instance, report) {
-			return true;
-		}
-	};
-	
-	ENVIRONMENT = new JSV.Environment();
-	ENVIRONMENT.setOption("defaultFragmentDelimiter", "/");
-	ENVIRONMENT.setOption("defaultSchemaURI", "http://json-schema.org/schema#");  //updated later
-	
-	SCHEMA = ENVIRONMENT.createSchema({
-		"$schema" : "http://json-schema.org/hyper-schema#",
-		"id" : "http://json-schema.org/schema#",
-		"type" : "object",
-		
-		"properties" : {
-			"type" : {
-				"type" : ["string", "array"],
-				"items" : {
-					"type" : ["string", {"$ref" : "#"}]
-				},
-				"optional" : true,
-				"uniqueItems" : true,
-				"default" : "any",
-				
-				"parser" : function (instance, self) {
-					var parser;
-					
-					if (instance.getType() === "string") {
-						return instance.getValue();
-					} else if (instance.getType() === "object") {
-						return instance.getEnvironment().createSchema(
-							instance, 
-							self.getEnvironment().findSchema(self.resolveURI("#"))
-						);
-					} else if (instance.getType() === "array") {
-						parser = self.getValueOfProperty("parser");
-						return JSV.mapArray(instance.getProperties(), function (prop) {
-							return parser(prop, self);
-						});
-					}
-					//else
-					return "any";
-				},
-			
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var requiredTypes = JSV.toArray(schema.getAttribute("type")),
-						x, xl, type, subreport, typeValidators;
-					
-					//for instances that are required to be a certain type
-					if (instance.getType() !== "undefined" && requiredTypes && requiredTypes.length) {
-						typeValidators = self.getValueOfProperty("typeValidators") || {};
-						
-						//ensure that type matches for at least one of the required types
-						for (x = 0, xl = requiredTypes.length; x < xl; ++x) {
-							type = requiredTypes[x];
-							if (JSV.isJSONSchema(type)) {
-								subreport = JSV.createObject(report);
-								subreport.errors = [];
-								subreport.validated = JSV.clone(report.validated);
-								if (type.validate(instance, subreport, parent, parentSchema, name).errors.length === 0) {
-									return true;  //instance matches this schema
-								}
-							} else {
-								if (typeValidators[type] !== O[type] && typeof typeValidators[type] === "function") {
-									if (typeValidators[type](instance, report)) {
-										return true;  //type is valid
-									}
-								} else {
-									return true;  //unknown types are assumed valid
-								}
-							}
-						}
-						
-						//if we get to this point, type is invalid
-						report.addError(instance, schema, "type", "Instance is not a required type", requiredTypes);
-						return false;
-					}
-					//else, anything is allowed if no type is specified
-					return true;
-				},
-				
-				"typeValidators" : TYPE_VALIDATORS
-			},
-			
-			"properties" : {
-				"type" : "object",
-				"additionalProperties" : {"$ref" : "#"},
-				"optional" : true,
-				"default" : {},
-				
-				"parser" : function (instance, self, arg) {
-					var env = instance.getEnvironment(),
-						selfEnv = self.getEnvironment();
-					if (instance.getType() === "object") {
-						if (arg) {
-							return env.createSchema(instance.getProperty(arg), selfEnv.findSchema(self.resolveURI("#")));
-						} else {
-							return JSV.mapObject(instance.getProperties(), function (instance) {
-								return env.createSchema(instance, selfEnv.findSchema(self.resolveURI("#")));
-							});
-						}
-					}
-					//else
-					return {};
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var propertySchemas, key;
-					//this attribute is for object type instances only
-					if (instance.getType() === "object") {
-						//for each property defined in the schema
-						propertySchemas = schema.getAttribute("properties");
-						for (key in propertySchemas) {
-							if (propertySchemas[key] !== O[key] && propertySchemas[key]) {
-								//ensure that instance property is valid
-								propertySchemas[key].validate(instance.getProperty(key), report, instance, schema, key);
-							}
-						}
-					}
-				}
-			},
-			
-			"items" : {
-				"type" : [{"$ref" : "#"}, "array"],
-				"items" : {"$ref" : "#"},
-				"optional" : true,
-				"default" : {},
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "object") {
-						return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
-					} else if (instance.getType() === "array") {
-						return JSV.mapArray(instance.getProperties(), function (instance) {
-							return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
-						});
-					}
-					//else
-					return instance.getEnvironment().createEmptySchema();
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var properties, items, x, xl, itemSchema, additionalProperties;
-					
-					if (instance.getType() === "array") {
-						properties = instance.getProperties();
-						items = schema.getAttribute("items");
-						additionalProperties = schema.getAttribute("additionalProperties");
-						
-						if (JSV.typeOf(items) === "array") {
-							for (x = 0, xl = properties.length; x < xl; ++x) {
-								itemSchema = items[x] || additionalProperties;
-								if (itemSchema !== false) {
-									itemSchema.validate(properties[x], report, instance, schema, x);
-								} else {
-									report.addError(instance, schema, "additionalProperties", "Additional items are not allowed", itemSchema);
-								}
-							}
-						} else {
-							itemSchema = items || additionalProperties;
-							for (x = 0, xl = properties.length; x < xl; ++x) {
-								itemSchema.validate(properties[x], report, instance, schema, x);
-							}
-						}
-					}
-				}
-			},
-			
-			"optional" : {
-				"type" : "boolean",
-				"optional" : true,
-				"default" : false,
-				
-				"parser" : function (instance, self) {
-					return !!instance.getValue();
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					if (instance.getType() === "undefined" && !schema.getAttribute("optional")) {
-						report.addError(instance, schema, "optional", "Property is required", false);
-					}
-				},
-				
-				"validationRequired" : true
-			},
-			
-			"additionalProperties" : {
-				"type" : [{"$ref" : "#"}, "boolean"],
-				"optional" : true,
-				"default" : {},
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "object") {
-						return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
-					} else if (instance.getType() === "boolean" && instance.getValue() === false) {
-						return false;
-					}
-					//else
-					return instance.getEnvironment().createEmptySchema();
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var additionalProperties, propertySchemas, properties, key;
-					//we only need to check against object types as arrays do their own checking on this property
-					if (instance.getType() === "object") {
-						additionalProperties = schema.getAttribute("additionalProperties");
-						propertySchemas = schema.getAttribute("properties") || {};
-						properties = instance.getProperties();
-						for (key in properties) {
-							if (properties[key] !== O[key] && properties[key] && !propertySchemas[key]) {
-								if (JSV.isJSONSchema(additionalProperties)) {
-									additionalProperties.validate(properties[key], report, instance, schema, key);
-								} else if (additionalProperties === false) {
-									report.addError(instance, schema, "additionalProperties", "Additional properties are not allowed", additionalProperties);
-								}
-							}
-						}
-					}
-				}
-			},
-			
-			"requires" : {
-				"type" : ["string", {"$ref" : "#"}],
-				"optional" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "string") {
-						return instance.getValue();
-					} else if (instance.getType() === "object") {
-						return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var requires;
-					if (instance.getType() !== "undefined" && parent && parent.getType() !== "undefined") {
-						requires = schema.getAttribute("requires");
-						if (typeof requires === "string") {
-							if (parent.getProperty(requires).getType() === "undefined") {
-								report.addError(instance, schema, "requires", 'Property requires sibling property "' + requires + '"', requires);
-							}
-						} else if (JSV.isJSONSchema(requires)) {
-							requires.validate(parent, report);  //WATCH: A "requires" schema does not support the "requires" attribute
-						}
-					}
-				}
-			},
-			
-			"minimum" : {
-				"type" : "number",
-				"optional" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var minimum, minimumCanEqual;
-					if (instance.getType() === "number") {
-						minimum = schema.getAttribute("minimum");
-						minimumCanEqual = schema.getAttribute("minimumCanEqual");
-						if (typeof minimum === "number" && (instance.getValue() < minimum || (minimumCanEqual === false && instance.getValue() === minimum))) {
-							report.addError(instance, schema, "minimum", "Number is less than the required minimum value", minimum);
-						}
-					}
-				}
-			},
-			
-			"maximum" : {
-				"type" : "number",
-				"optional" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var maximum, maximumCanEqual;
-					if (instance.getType() === "number") {
-						maximum = schema.getAttribute("maximum");
-						maximumCanEqual = schema.getAttribute("maximumCanEqual");
-						if (typeof maximum === "number" && (instance.getValue() > maximum || (maximumCanEqual === false && instance.getValue() === maximum))) {
-							report.addError(instance, schema, "maximum", "Number is greater than the required maximum value", maximum);
-						}
-					}
-				}
-			},
-			
-			"minimumCanEqual" : {
-				"type" : "boolean",
-				"optional" : true,
-				"requires" : "minimum",
-				"default" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "boolean") {
-						return instance.getValue();
-					}
-					//else
-					return true;
-				}
-			},
-			
-			"maximumCanEqual" : {
-				"type" : "boolean",
-				"optional" : true,
-				"requires" : "maximum",
-				"default" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "boolean") {
-						return instance.getValue();
-					}
-					//else
-					return true;
-				}
-			},
-			
-			"minItems" : {
-				"type" : "integer",
-				"optional" : true,
-				"minimum" : 0,
-				"default" : 0,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-					//else
-					return 0;
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var minItems;
-					if (instance.getType() === "array") {
-						minItems = schema.getAttribute("minItems");
-						if (typeof minItems === "number" && instance.getProperties().length < minItems) {
-							report.addError(instance, schema, "minItems", "The number of items is less than the required minimum", minItems);
-						}
-					}
-				}
-			},
-			
-			"maxItems" : {
-				"type" : "integer",
-				"optional" : true,
-				"minimum" : 0,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var maxItems;
-					if (instance.getType() === "array") {
-						maxItems = schema.getAttribute("maxItems");
-						if (typeof maxItems === "number" && instance.getProperties().length > maxItems) {
-							report.addError(instance, schema, "maxItems", "The number of items is greater than the required maximum", maxItems);
-						}
-					}
-				}
-			},
-			
-			"uniqueItems" : {
-				"type" : "boolean",
-				"optional" : true,
-				"default" : false,
-				
-				"parser" : function (instance, self) {
-					return !!instance.getValue();
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var value, x, xl, y, yl;
-					if (instance.getType() === "array" && schema.getAttribute("uniqueItems")) {
-						value = instance.getProperties();
-						for (x = 0, xl = value.length - 1; x < xl; ++x) {
-							for (y = x + 1, yl = value.length; y < yl; ++y) {
-								if (value[x].equals(value[y])) {
-									report.addError(instance, schema, "uniqueItems", "Array can only contain unique items", { x : x, y : y });
-								}
-							}
-						}
-					}
-				}
-			},
-			
-			"pattern" : {
-				"type" : "string",
-				"optional" : true,
-				"format" : "regex",
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "string") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var pattern;
-					try {
-						pattern = new RegExp(schema.getAttribute("pattern"));
-						if (instance.getType() === "string" && pattern && !pattern.test(instance.getValue())) {
-							report.addError(instance, schema, "pattern", "String does not match pattern", pattern.toString());
-						}
-					} catch (e) {
-						report.addError(instance, schema, "pattern", "Invalid pattern", e);
-					}
-				}
-			},
-			
-			"minLength" : {
-				"type" : "integer",
-				"optional" : true,
-				"minimum" : 0,
-				"default" : 0,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-					//else
-					return 0;
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var minLength;
-					if (instance.getType() === "string") {
-						minLength = schema.getAttribute("minLength");
-						if (typeof minLength === "number" && instance.getValue().length < minLength) {
-							report.addError(instance, schema, "minLength", "String is less than the required minimum length", minLength);
-						}
-					}
-				}
-			},
-			
-			"maxLength" : {
-				"type" : "integer",
-				"optional" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var maxLength;
-					if (instance.getType() === "string") {
-						maxLength = schema.getAttribute("maxLength");
-						if (typeof maxLength === "number" && instance.getValue().length > maxLength) {
-							report.addError(instance, schema, "maxLength", "String is greater than the required maximum length", maxLength);
-						}
-					}
-				}
-			},
-			
-			"enum" : {
-				"type" : "array",
-				"optional" : true,
-				"minItems" : 1,
-				"uniqueItems" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "array") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var enums, x, xl;
-					if (instance.getType() !== "undefined") {
-						enums = schema.getAttribute("enum");
-						if (enums) {
-							for (x = 0, xl = enums.length; x < xl; ++x) {
-								if (instance.equals(enums[x])) {
-									return true;
-								}
-							}
-							report.addError(instance, schema, "enum", "Instance is not one of the possible values", enums);
-						}
-					}
-				}
-			},
-			
-			"title" : {
-				"type" : "string",
-				"optional" : true
-			},
-			
-			"description" : {
-				"type" : "string",
-				"optional" : true
-			},
-			
-			"format" : {
-				"type" : "string",
-				"optional" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "string") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var format, formatValidators;
-					if (instance.getType() === "string") {
-						format = schema.getAttribute("format");
-						formatValidators = self.getValueOfProperty("formatValidators");
-						if (typeof format === "string" && formatValidators[format] !== O[format] && typeof formatValidators[format] === "function" && !formatValidators[format].call(this, instance, report)) {
-							report.addError(instance, schema, "format", "String is not in the required format", format);
-						}
-					}
-				},
-				
-				"formatValidators" : {}
-			},
-			
-			"contentEncoding" : {
-				"type" : "string",
-				"optional" : true
-			},
-			
-			"default" : {
-				"type" : "any",
-				"optional" : true
-			},
-			
-			"divisibleBy" : {
-				"type" : "number",
-				"minimum" : 0,
-				"minimumCanEqual" : false,
-				"optional" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var divisor;
-					if (instance.getType() === "number") {
-						divisor = schema.getAttribute("divisibleBy");
-						if (divisor === 0) {
-							report.addError(instance, schema, "divisibleBy", "Nothing is divisible by 0", divisor);
-						} else if (divisor !== 1 && ((instance.getValue() / divisor) % 1) !== 0) {
-							report.addError(instance, schema, "divisibleBy", "Number is not divisible by " + divisor, divisor);
-						}
-					}
-				}
-			},
-			
-			"disallow" : {
-				"type" : ["string", "array"],
-				"items" : {"type" : "string"},
-				"optional" : true,
-				"uniqueItems" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "string" || instance.getType() === "array") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var disallowedTypes = JSV.toArray(schema.getAttribute("disallow")),
-						x, xl, key, typeValidators;
-					
-					//for instances that are required to be a certain type
-					if (instance.getType() !== "undefined" && disallowedTypes && disallowedTypes.length) {
-						typeValidators = self.getValueOfProperty("typeValidators") || {};
-						
-						//ensure that type matches for at least one of the required types
-						for (x = 0, xl = disallowedTypes.length; x < xl; ++x) {
-							key = disallowedTypes[x];
-							if (typeValidators[key] !== O[key] && typeof typeValidators[key] === "function") {
-								if (typeValidators[key](instance, report)) {
-									report.addError(instance, schema, "disallow", "Instance is a disallowed type", disallowedTypes);
-									return false;
-								}
-							} 
-							/*
-							else {
-								report.addError(instance, schema, "disallow", "Instance may be a disallowed type", disallowedTypes);
-								return false;
-							}
-							*/
-						}
-						
-						//if we get to this point, type is valid
-						return true;
-					}
-					//else, everything is allowed if no disallowed types are specified
-					return true;
-				},
-				
-				"typeValidators" : TYPE_VALIDATORS
-			},
-		
-			"extends" : {
-				"type" : [{"$ref" : "#"}, "array"],
-				"items" : {"$ref" : "#"},
-				"optional" : true,
-				"default" : {},
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "object") {
-						return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
-					} else if (instance.getType() === "array") {
-						return JSV.mapArray(instance.getProperties(), function (instance) {
-							return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
-						});
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var extensions = schema.getAttribute("extends"), x, xl;
-					if (extensions) {
-						if (JSV.isJSONSchema(extensions)) {
-							extensions.validate(instance, report, parent, parentSchema, name);
-						} else if (JSV.typeOf(extensions) === "array") {
-							for (x = 0, xl = extensions.length; x < xl; ++x) {
-								extensions[x].validate(instance, report, parent, parentSchema, name);
-							}
-						}
-					}
-				}
-			}
-		},
-		
-		"optional" : true,
-		"default" : {},
-		"fragmentResolution" : "slash-delimited",
-		
-		"parser" : function (instance, self) {
-			if (instance.getType() === "object") {
-				return instance.getEnvironment().createSchema(instance, self);
-			}
-		},
-		
-		"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-			var propNames = schema.getPropertyNames(), 
-				x, xl,
-				attributeSchemas = self.getAttribute("properties"),
-				validator;
-			
-			for (x in attributeSchemas) {
-				if (attributeSchemas[x] !== O[x] && attributeSchemas[x].getValueOfProperty("validationRequired")) {
-					JSV.pushUnique(propNames, x);
-				}
-			}
-			
-			for (x = 0, xl = propNames.length; x < xl; ++x) {
-				if (attributeSchemas[propNames[x]] !== O[propNames[x]]) {
-					validator = attributeSchemas[propNames[x]].getValueOfProperty("validator");
-					if (typeof validator === "function") {
-						validator(instance, schema, attributeSchemas[propNames[x]], report, parent, parentSchema, name);
-					}
-				}
-			}
-		},
-				
-		"initializer" : function (instance) {
-			var link, extension, extended;
-			
-			//if there is a link to a different schema, set reference
-			link = instance._schema.getLink("describedby", instance);
-			if (link && instance._schema._uri !== link) {
-				instance.setReference("describedby", link);
-			}
-			
-			//if instance has a URI link to itself, update it's own URI
-			link = instance._schema.getLink("self", instance);
-			if (JSV.typeOf(link) === "string") {
-				instance._uri = JSV.formatURI(link);
-			}
-			
-			//if there is a link to the full representation, set reference
-			link = instance._schema.getLink("full", instance);
-			if (link && instance._uri !== link) {
-				instance.setReference("full", link);
-			}
-			
-			//extend schema
-			extension = instance.getAttribute("extends");
-			if (JSV.isJSONSchema(extension)) {
-				extended = JSV.inherits(extension, instance, true);
-				instance = instance._env.createSchema(extended, instance._schema, instance._uri);
-			}
-			
-			return instance;
-		}
-	}, true, "http://json-schema.org/schema#");
-	
-	HYPERSCHEMA = ENVIRONMENT.createSchema(JSV.inherits(SCHEMA, ENVIRONMENT.createSchema({
-		"$schema" : "http://json-schema.org/hyper-schema#",
-		"id" : "http://json-schema.org/hyper-schema#",
-	
-		"properties" : {
-			"links" : {
-				"type" : "array",
-				"items" : {"$ref" : "links#"},
-				"optional" : true,
-				
-				"parser" : function (instance, self, arg) {
-					var links,
-						linkSchemaURI = self.getValueOfProperty("items")["$ref"],
-						linkSchema = self.getEnvironment().findSchema(linkSchemaURI),
-						linkParser = linkSchema && linkSchema.getValueOfProperty("parser");
-					arg = JSV.toArray(arg);
-					
-					if (typeof linkParser === "function") {
-						links = JSV.mapArray(instance.getProperties(), function (link) {
-							return linkParser(link, linkSchema);
-						});
-					} else {
-						links = JSV.toArray(instance.getValue());
-					}
-					
-					if (arg[0]) {
-						links = JSV.filterArray(links, function (link) {
-							return link["rel"] === arg[0];
-						});
-					}
-					
-					if (arg[1]) {
-						links = JSV.mapArray(links, function (link) {
-							var instance = arg[1],
-								href = link["href"];
-							href = href.replace(/\{(.+)\}/g, function (str, p1, offset, s) {
-								var value; 
-								if (p1 === "-this") {
-									value = instance.getValue();
-								} else {
-									value = instance.getValueOfProperty(p1);
-								}
-								return value !== undefined ? String(value) : "";
-							});
-							return href ? JSV.formatURI(instance.resolveURI(href)) : href;
-						});
-					}
-					
-					return links;
-				}
-			},
-			
-			"fragmentResolution" : {
-				"type" : "string",
-				"optional" : true,
-				"default" : "slash-delimited"
-			},
-			
-			"root" : {
-				"type" : "boolean",
-				"optional" : true,
-				"default" : false
-			},
-			
-			"readonly" : {
-				"type" : "boolean",
-				"optional" : true,
-				"default" : false
-			},
-			
-			"pathStart" : {
-				"type" : "string",
-				"optional" : true,
-				"format" : "uri",
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var pathStart;
-					if (instance.getType() !== "undefined") {
-						pathStart = schema.getAttribute("pathStart");
-						if (typeof pathStart === "string") {
-							//TODO: Find out what pathStart is relative to
-							if (instance.getURI().indexOf(pathStart) !== 0) {
-								report.addError(instance, schema, "pathStart", "Instance's URI does not start with " + pathStart, pathStart);
-							}
-						}
-					}
-				}
-			},
-			
-			"mediaType" : {
-				"type" : "string",
-				"optional" : true,
-				"format" : "media-type"
-			},
-			
-			"alternate" : {
-				"type" : "array",
-				"items" : {"$ref" : "#"},
-				"optional" : true
-			}
-		},
-		
-		"links" : [
-			{
-				"href" : "{$ref}",
-				"rel" : "full"
-			},
-			
-			{
-				"href" : "{$schema}",
-				"rel" : "describedby"
-			},
-			
-			{
-				"href" : "{id}",
-				"rel" : "self"
-			}
-		]//,
-		
-		//not needed as JSV.inherits does the job for us
-		//"extends" : {"$ref" : "http://json-schema.org/schema#"}
-	}, SCHEMA), true), true, "http://json-schema.org/hyper-schema#");
-	
-	ENVIRONMENT.setOption("defaultSchemaURI", "http://json-schema.org/hyper-schema#");
-	
-	LINKS = ENVIRONMENT.createSchema({
-		"$schema" : "http://json-schema.org/hyper-schema#",
-		"id" : "http://json-schema.org/links#",
-		"type" : "object",
-		
-		"properties" : {
-			"href" : {
-				"type" : "string"
-			},
-			
-			"rel" : {
-				"type" : "string"
-			},
-			
-			"targetSchema" : {
-				"$ref" : "hyper-schema#",
-				
-				//need this here because parsers are run before links are resolved
-				"parser" : HYPERSCHEMA.getAttribute("parser")
-			},
-			
-			"method" : {
-				"type" : "string",
-				"default" : "GET",
-				"optional" : true
-			},
-			
-			"enctype" : {
-				"type" : "string",
-				"requires" : "method",
-				"optional" : true
-			},
-			
-			"properties" : {
-				"type" : "object",
-				"additionalProperties" : {"$ref" : "hyper-schema#"},
-				"optional" : true,
-				
-				"parser" : function (instance, self, arg) {
-					var env = instance.getEnvironment(),
-						selfEnv = self.getEnvironment(),
-						additionalPropertiesSchemaURI = self.getValueOfProperty("additionalProperties")["$ref"];
-					if (instance.getType() === "object") {
-						if (arg) {
-							return env.createSchema(instance.getProperty(arg), selfEnv.findSchema(self.resolveURI(additionalPropertiesSchemaURI)));
-						} else {
-							return JSV.mapObject(instance.getProperties(), function (instance) {
-								return env.createSchema(instance, selfEnv.findSchema(self.resolveURI(additionalPropertiesSchemaURI)));
-							});
-						}
-					}
-				}
-			}
-		},
-		
-		"parser" : function (instance, self) {
-			var selfProperties = self.getProperty("properties");
-			if (instance.getType() === "object") {
-				return JSV.mapObject(instance.getProperties(), function (property, key) {
-					var propertySchema = selfProperties.getProperty(key),
-						parser = propertySchema && propertySchema.getValueOfProperty("parser");
-					if (typeof parser === "function") {
-						return parser(property, propertySchema);
-					}
-					//else
-					return property.getValue();
-				});
-			}
-			return instance.getValue();
-		}
-	}, HYPERSCHEMA, "http://json-schema.org/links#");
-	
-	JSV.registerEnvironment("json-schema-draft-02", ENVIRONMENT);
-	if (!JSV.getDefaultEnvironmentID() || JSV.getDefaultEnvironmentID() === "json-schema-draft-01") {
-		JSV.setDefaultEnvironmentID("json-schema-draft-02");
-	}
-	
-}());
-},{"./jsv":11}],10:[function(require,module,exports){
-/**
- * json-schema-draft-03 Environment
- * 
- * @fileOverview Implementation of the third revision of the JSON Schema specification draft.
- * @author <a href="mailto:gary.court@gmail.com">Gary Court</a>
- * @version 1.5.1
- * @see http://github.com/garycourt/JSV
- */
-
-/*
- * Copyright 2010 Gary Court. All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without modification, are
- * permitted provided that the following conditions are met:
- * 
- *    1. Redistributions of source code must retain the above copyright notice, this list of
- *       conditions and the following disclaimer.
- * 
- *    2. Redistributions in binary form must reproduce the above copyright notice, this list
- *       of conditions and the following disclaimer in the documentation and/or other materials
- *       provided with the distribution.
- * 
- * THIS SOFTWARE IS PROVIDED BY GARY COURT ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL GARY COURT OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
- * The views and conclusions contained in the software and documentation are those of the
- * authors and should not be interpreted as representing official policies, either expressed
- * or implied, of Gary Court or the JSON Schema specification.
- */
-
-/*jslint white: true, sub: true, onevar: true, undef: true, eqeqeq: true, newcap: true, immed: true, indent: 4 */
-/*global require */
-
-(function () {
-	var O = {},
-		JSV = require('./jsv').JSV,
-		TYPE_VALIDATORS,
-		ENVIRONMENT,
-		SCHEMA_00_JSON,
-		HYPERSCHEMA_00_JSON,
-		LINKS_00_JSON, 
-		SCHEMA_00,
-		HYPERSCHEMA_00,
-		LINKS_00, 
-		SCHEMA_01_JSON,
-		HYPERSCHEMA_01_JSON,
-		LINKS_01_JSON, 
-		SCHEMA_01,
-		HYPERSCHEMA_01,
-		LINKS_01, 
-		SCHEMA_02_JSON,
-		HYPERSCHEMA_02_JSON,
-		LINKS_02_JSON,
-		SCHEMA_02,
-		HYPERSCHEMA_02,
-		LINKS_02, 
-		SCHEMA_03_JSON,
-		HYPERSCHEMA_03_JSON,
-		LINKS_03_JSON,
-		SCHEMA_03,
-		HYPERSCHEMA_03,
-		LINKS_03;
-	
-	TYPE_VALIDATORS = {
-		"string" : function (instance, report) {
-			return instance.getType() === "string";
-		},
-		
-		"number" : function (instance, report) {
-			return instance.getType() === "number";
-		},
-		
-		"integer" : function (instance, report) {
-			return instance.getType() === "number" && instance.getValue() % 1 === 0;
-		},
-		
-		"boolean" : function (instance, report) {
-			return instance.getType() === "boolean";
-		},
-		
-		"object" : function (instance, report) {
-			return instance.getType() === "object";
-		},
-		
-		"array" : function (instance, report) {
-			return instance.getType() === "array";
-		},
-		
-		"null" : function (instance, report) {
-			return instance.getType() === "null";
-		},
-		
-		"any" : function (instance, report) {
-			return true;
-		}
-	};
-	
-	ENVIRONMENT = new JSV.Environment();
-	ENVIRONMENT.setOption("validateReferences", true);
-	ENVIRONMENT.setOption("enforceReferences", false);
-	ENVIRONMENT.setOption("strict", false);
-	
-	//
-	// draft-00
-	//
-	
-	SCHEMA_00_JSON = {
-		"$schema" : "http://json-schema.org/draft-00/hyper-schema#",
-		"id" : "http://json-schema.org/draft-00/schema#",
-		"type" : "object",
-		
-		"properties" : {
-			"type" : {
-				"type" : ["string", "array"],
-				"items" : {
-					"type" : ["string", {"$ref" : "#"}]
-				},
-				"optional" : true,
-				"uniqueItems" : true,
-				"default" : "any",
-				
-				"parser" : function (instance, self) {
-					var parser;
-					
-					if (instance.getType() === "string") {
-						return instance.getValue();
-					} else if (instance.getType() === "object") {
-						return instance.getEnvironment().createSchema(
-							instance, 
-							self.getEnvironment().findSchema(self.resolveURI("#"))
-						);
-					} else if (instance.getType() === "array") {
-						parser = self.getValueOfProperty("parser");
-						return JSV.mapArray(instance.getProperties(), function (prop) {
-							return parser(prop, self);
-						});
-					}
-					//else
-					return "any";
-				},
-			
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var requiredTypes = JSV.toArray(schema.getAttribute("type")),
-						x, xl, type, subreport, typeValidators;
-					
-					//for instances that are required to be a certain type
-					if (instance.getType() !== "undefined" && requiredTypes && requiredTypes.length) {
-						typeValidators = self.getValueOfProperty("typeValidators") || {};
-						
-						//ensure that type matches for at least one of the required types
-						for (x = 0, xl = requiredTypes.length; x < xl; ++x) {
-							type = requiredTypes[x];
-							if (JSV.isJSONSchema(type)) {
-								subreport = JSV.createObject(report);
-								subreport.errors = [];
-								subreport.validated = JSV.clone(report.validated);
-								if (type.validate(instance, subreport, parent, parentSchema, name).errors.length === 0) {
-									return true;  //instance matches this schema
-								}
-							} else {
-								if (typeValidators[type] !== O[type] && typeof typeValidators[type] === "function") {
-									if (typeValidators[type](instance, report)) {
-										return true;  //type is valid
-									}
-								} else {
-									return true;  //unknown types are assumed valid
-								}
-							}
-						}
-						
-						//if we get to this point, type is invalid
-						report.addError(instance, schema, "type", "Instance is not a required type", requiredTypes);
-						return false;
-					}
-					//else, anything is allowed if no type is specified
-					return true;
-				},
-				
-				"typeValidators" : TYPE_VALIDATORS
-			},
-			
-			"properties" : {
-				"type" : "object",
-				"additionalProperties" : {"$ref" : "#"},
-				"optional" : true,
-				"default" : {},
-				
-				"parser" : function (instance, self, arg) {
-					var env = instance.getEnvironment(),
-						selfEnv = self.getEnvironment();
-					if (instance.getType() === "object") {
-						if (arg) {
-							return env.createSchema(instance.getProperty(arg), selfEnv.findSchema(self.resolveURI("#")));
-						} else {
-							return JSV.mapObject(instance.getProperties(), function (instance) {
-								return env.createSchema(instance, selfEnv.findSchema(self.resolveURI("#")));
-							});
-						}
-					}
-					//else
-					return {};
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var propertySchemas, key;
-					//this attribute is for object type instances only
-					if (instance.getType() === "object") {
-						//for each property defined in the schema
-						propertySchemas = schema.getAttribute("properties");
-						for (key in propertySchemas) {
-							if (propertySchemas[key] !== O[key] && propertySchemas[key]) {
-								//ensure that instance property is valid
-								propertySchemas[key].validate(instance.getProperty(key), report, instance, schema, key);
-							}
-						}
-					}
-				}
-			},
-			
-			"items" : {
-				"type" : [{"$ref" : "#"}, "array"],
-				"items" : {"$ref" : "#"},
-				"optional" : true,
-				"default" : {},
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "object") {
-						return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
-					} else if (instance.getType() === "array") {
-						return JSV.mapArray(instance.getProperties(), function (instance) {
-							return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
-						});
-					}
-					//else
-					return instance.getEnvironment().createEmptySchema();
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var properties, items, x, xl, itemSchema, additionalProperties;
-					
-					if (instance.getType() === "array") {
-						properties = instance.getProperties();
-						items = schema.getAttribute("items");
-						additionalProperties = schema.getAttribute("additionalProperties");
-						
-						if (JSV.typeOf(items) === "array") {
-							for (x = 0, xl = properties.length; x < xl; ++x) {
-								itemSchema = items[x] || additionalProperties;
-								if (itemSchema !== false) {
-									itemSchema.validate(properties[x], report, instance, schema, x);
-								} else {
-									report.addError(instance, schema, "additionalProperties", "Additional items are not allowed", itemSchema);
-								}
-							}
-						} else {
-							itemSchema = items || additionalProperties;
-							for (x = 0, xl = properties.length; x < xl; ++x) {
-								itemSchema.validate(properties[x], report, instance, schema, x);
-							}
-						}
-					}
-				}
-			},
-			
-			"optional" : {
-				"type" : "boolean",
-				"optional" : true,
-				"default" : false,
-				
-				"parser" : function (instance, self) {
-					return !!instance.getValue();
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					if (instance.getType() === "undefined" && !schema.getAttribute("optional")) {
-						report.addError(instance, schema, "optional", "Property is required", false);
-					}
-				},
-				
-				"validationRequired" : true
-			},
-			
-			"additionalProperties" : {
-				"type" : [{"$ref" : "#"}, "boolean"],
-				"optional" : true,
-				"default" : {},
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "object") {
-						return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
-					} else if (instance.getType() === "boolean" && instance.getValue() === false) {
-						return false;
-					}
-					//else
-					return instance.getEnvironment().createEmptySchema();
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var additionalProperties, propertySchemas, properties, key;
-					//we only need to check against object types as arrays do their own checking on this property
-					if (instance.getType() === "object") {
-						additionalProperties = schema.getAttribute("additionalProperties");
-						propertySchemas = schema.getAttribute("properties") || {};
-						properties = instance.getProperties();
-						for (key in properties) {
-							if (properties[key] !== O[key] && properties[key] && propertySchemas[key] === O[key]) {
-								if (JSV.isJSONSchema(additionalProperties)) {
-									additionalProperties.validate(properties[key], report, instance, schema, key);
-								} else if (additionalProperties === false) {
-									report.addError(instance, schema, "additionalProperties", "Additional properties are not allowed", additionalProperties);
-								}
-							}
-						}
-					}
-				}
-			},
-			
-			"requires" : {
-				"type" : ["string", {"$ref" : "#"}],
-				"optional" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "string") {
-						return instance.getValue();
-					} else if (instance.getType() === "object") {
-						return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var requires;
-					if (instance.getType() !== "undefined" && parent && parent.getType() !== "undefined") {
-						requires = schema.getAttribute("requires");
-						if (typeof requires === "string") {
-							if (parent.getProperty(requires).getType() === "undefined") {
-								report.addError(instance, schema, "requires", 'Property requires sibling property "' + requires + '"', requires);
-							}
-						} else if (JSV.isJSONSchema(requires)) {
-							requires.validate(parent, report);  //WATCH: A "requires" schema does not support the "requires" attribute
-						}
-					}
-				}
-			},
-			
-			"minimum" : {
-				"type" : "number",
-				"optional" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var minimum, minimumCanEqual;
-					if (instance.getType() === "number") {
-						minimum = schema.getAttribute("minimum");
-						minimumCanEqual = schema.getAttribute("minimumCanEqual");
-						if (typeof minimum === "number" && (instance.getValue() < minimum || (minimumCanEqual === false && instance.getValue() === minimum))) {
-							report.addError(instance, schema, "minimum", "Number is less than the required minimum value", minimum);
-						}
-					}
-				}
-			},
-			
-			"maximum" : {
-				"type" : "number",
-				"optional" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var maximum, maximumCanEqual;
-					if (instance.getType() === "number") {
-						maximum = schema.getAttribute("maximum");
-						maximumCanEqual = schema.getAttribute("maximumCanEqual");
-						if (typeof maximum === "number" && (instance.getValue() > maximum || (maximumCanEqual === false && instance.getValue() === maximum))) {
-							report.addError(instance, schema, "maximum", "Number is greater than the required maximum value", maximum);
-						}
-					}
-				}
-			},
-			
-			"minimumCanEqual" : {
-				"type" : "boolean",
-				"optional" : true,
-				"requires" : "minimum",
-				"default" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "boolean") {
-						return instance.getValue();
-					}
-					//else
-					return true;
-				}
-			},
-			
-			"maximumCanEqual" : {
-				"type" : "boolean",
-				"optional" : true,
-				"requires" : "maximum",
-				"default" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "boolean") {
-						return instance.getValue();
-					}
-					//else
-					return true;
-				}
-			},
-			
-			"minItems" : {
-				"type" : "integer",
-				"optional" : true,
-				"minimum" : 0,
-				"default" : 0,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-					//else
-					return 0;
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var minItems;
-					if (instance.getType() === "array") {
-						minItems = schema.getAttribute("minItems");
-						if (typeof minItems === "number" && instance.getProperties().length < minItems) {
-							report.addError(instance, schema, "minItems", "The number of items is less than the required minimum", minItems);
-						}
-					}
-				}
-			},
-			
-			"maxItems" : {
-				"type" : "integer",
-				"optional" : true,
-				"minimum" : 0,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var maxItems;
-					if (instance.getType() === "array") {
-						maxItems = schema.getAttribute("maxItems");
-						if (typeof maxItems === "number" && instance.getProperties().length > maxItems) {
-							report.addError(instance, schema, "maxItems", "The number of items is greater than the required maximum", maxItems);
-						}
-					}
-				}
-			},
-			
-			"pattern" : {
-				"type" : "string",
-				"optional" : true,
-				"format" : "regex",
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "string") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var pattern;
-					try {
-						pattern = new RegExp(schema.getAttribute("pattern"));
-						if (instance.getType() === "string" && pattern && !pattern.test(instance.getValue())) {
-							report.addError(instance, schema, "pattern", "String does not match pattern", pattern.toString());
-						}
-					} catch (e) {
-						report.addError(schema, self, "pattern", "Invalid pattern", schema.getValueOfProperty("pattern"));
-					}
-				}
-			},
-			
-			"minLength" : {
-				"type" : "integer",
-				"optional" : true,
-				"minimum" : 0,
-				"default" : 0,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-					//else
-					return 0;
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var minLength;
-					if (instance.getType() === "string") {
-						minLength = schema.getAttribute("minLength");
-						if (typeof minLength === "number" && instance.getValue().length < minLength) {
-							report.addError(instance, schema, "minLength", "String is less than the required minimum length", minLength);
-						}
-					}
-				}
-			},
-			
-			"maxLength" : {
-				"type" : "integer",
-				"optional" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var maxLength;
-					if (instance.getType() === "string") {
-						maxLength = schema.getAttribute("maxLength");
-						if (typeof maxLength === "number" && instance.getValue().length > maxLength) {
-							report.addError(instance, schema, "maxLength", "String is greater than the required maximum length", maxLength);
-						}
-					}
-				}
-			},
-			
-			"enum" : {
-				"type" : "array",
-				"optional" : true,
-				"minItems" : 1,
-				"uniqueItems" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "array") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var enums, x, xl;
-					if (instance.getType() !== "undefined") {
-						enums = schema.getAttribute("enum");
-						if (enums) {
-							for (x = 0, xl = enums.length; x < xl; ++x) {
-								if (instance.equals(enums[x])) {
-									return true;
-								}
-							}
-							report.addError(instance, schema, "enum", "Instance is not one of the possible values", enums);
-						}
-					}
-				}
-			},
-			
-			"title" : {
-				"type" : "string",
-				"optional" : true
-			},
-			
-			"description" : {
-				"type" : "string",
-				"optional" : true
-			},
-			
-			"format" : {
-				"type" : "string",
-				"optional" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "string") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var format, formatValidators;
-					if (instance.getType() === "string") {
-						format = schema.getAttribute("format");
-						formatValidators = self.getValueOfProperty("formatValidators");
-						if (typeof format === "string" && formatValidators[format] !== O[format] && typeof formatValidators[format] === "function" && !formatValidators[format].call(this, instance, report)) {
-							report.addError(instance, schema, "format", "String is not in the required format", format);
-						}
-					}
-				},
-				
-				"formatValidators" : {}
-			},
-			
-			"contentEncoding" : {
-				"type" : "string",
-				"optional" : true
-			},
-			
-			"default" : {
-				"type" : "any",
-				"optional" : true
-			},
-			
-			"maxDecimal" : {
-				"type" : "integer",
-				"optional" : true,
-				"minimum" : 0,
-								
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var maxDecimal, decimals;
-					if (instance.getType() === "number") {
-						maxDecimal = schema.getAttribute("maxDecimal");
-						if (typeof maxDecimal === "number") {
-							decimals = instance.getValue().toString(10).split('.')[1];
-							if (decimals && decimals.length > maxDecimal) {
-								report.addError(instance, schema, "maxDecimal", "The number of decimal places is greater than the allowed maximum", maxDecimal);
-							}
-						}
-					}
-				}
-			},
-			
-			"disallow" : {
-				"type" : ["string", "array"],
-				"items" : {"type" : "string"},
-				"optional" : true,
-				"uniqueItems" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "string" || instance.getType() === "array") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var disallowedTypes = JSV.toArray(schema.getAttribute("disallow")),
-						x, xl, key, typeValidators, subreport;
-					
-					//for instances that are required to be a certain type
-					if (instance.getType() !== "undefined" && disallowedTypes && disallowedTypes.length) {
-						typeValidators = self.getValueOfProperty("typeValidators") || {};
-						
-						//ensure that type matches for at least one of the required types
-						for (x = 0, xl = disallowedTypes.length; x < xl; ++x) {
-							key = disallowedTypes[x];
-							if (JSV.isJSONSchema(key)) {  //this is supported draft-03 and on
-								subreport = JSV.createObject(report);
-								subreport.errors = [];
-								subreport.validated = JSV.clone(report.validated);
-								if (key.validate(instance, subreport, parent, parentSchema, name).errors.length === 0) {
-									//instance matches this schema
-									report.addError(instance, schema, "disallow", "Instance is a disallowed type", disallowedTypes);
-									return false;  
-								}
-							} else if (typeValidators[key] !== O[key] && typeof typeValidators[key] === "function") {
-								if (typeValidators[key](instance, report)) {
-									report.addError(instance, schema, "disallow", "Instance is a disallowed type", disallowedTypes);
-									return false;
-								}
-							} 
-							/*
-							else {
-								report.addError(instance, schema, "disallow", "Instance may be a disallowed type", disallowedTypes);
-								return false;
-							}
-							*/
-						}
-						
-						//if we get to this point, type is valid
-						return true;
-					}
-					//else, everything is allowed if no disallowed types are specified
-					return true;
-				},
-				
-				"typeValidators" : TYPE_VALIDATORS
-			},
-		
-			"extends" : {
-				"type" : [{"$ref" : "#"}, "array"],
-				"items" : {"$ref" : "#"},
-				"optional" : true,
-				"default" : {},
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "object") {
-						return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
-					} else if (instance.getType() === "array") {
-						return JSV.mapArray(instance.getProperties(), function (instance) {
-							return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
-						});
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var extensions = schema.getAttribute("extends"), x, xl;
-					if (extensions) {
-						if (JSV.isJSONSchema(extensions)) {
-							extensions.validate(instance, report, parent, parentSchema, name);
-						} else if (JSV.typeOf(extensions) === "array") {
-							for (x = 0, xl = extensions.length; x < xl; ++x) {
-								extensions[x].validate(instance, report, parent, parentSchema, name);
-							}
-						}
-					}
-				}
-			}
-		},
-		
-		"optional" : true,
-		"default" : {},
-		"fragmentResolution" : "dot-delimited",
-		
-		"parser" : function (instance, self) {
-			if (instance.getType() === "object") {
-				return instance.getEnvironment().createSchema(instance, self);
-			}
-		},
-		
-		"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-			var propNames = schema.getPropertyNames(), 
-				x, xl,
-				attributeSchemas = self.getAttribute("properties"),
-				strict = instance.getEnvironment().getOption("strict"),
-				validator;
-			
-			for (x in attributeSchemas) {
-				if (attributeSchemas[x] !== O[x]) {
-					if (attributeSchemas[x].getValueOfProperty("validationRequired")) {
-						JSV.pushUnique(propNames, x);
-					}
-					if (strict && attributeSchemas[x].getValueOfProperty("deprecated")) {
-						JSV.popFirst(propNames, x);
-					}
-				}
-			}
-			
-			for (x = 0, xl = propNames.length; x < xl; ++x) {
-				if (attributeSchemas[propNames[x]] !== O[propNames[x]]) {
-					validator = attributeSchemas[propNames[x]].getValueOfProperty("validator");
-					if (typeof validator === "function") {
-						validator(instance, schema, attributeSchemas[propNames[x]], report, parent, parentSchema, name);
-					}
-				}
-			}
-		}
-	};
-	
-	HYPERSCHEMA_00_JSON = {
-		"$schema" : "http://json-schema.org/draft-00/hyper-schema#",
-		"id" : "http://json-schema.org/draft-00/hyper-schema#",
-	
-		"properties" : {
-			"links" : {
-				"type" : "array",
-				"items" : {"$ref" : "links#"},
-				"optional" : true,
-				
-				"parser" : function (instance, self, arg) {
-					var links,
-						linkSchemaURI = self.getValueOfProperty("items")["$ref"],
-						linkSchema = self.getEnvironment().findSchema(linkSchemaURI),
-						linkParser = linkSchema && linkSchema.getValueOfProperty("parser"),
-						selfReferenceVariable;
-					arg = JSV.toArray(arg);
-					
-					if (typeof linkParser === "function") {
-						links = JSV.mapArray(instance.getProperties(), function (link) {
-							return linkParser(link, linkSchema);
-						});
-					} else {
-						links = JSV.toArray(instance.getValue());
-					}
-					
-					if (arg[0]) {
-						links = JSV.filterArray(links, function (link) {
-							return link["rel"] === arg[0];
-						});
-					}
-					
-					if (arg[1]) {
-						selfReferenceVariable = self.getValueOfProperty("selfReferenceVariable");
-						links = JSV.mapArray(links, function (link) {
-							var instance = arg[1],
-								href = link["href"];
-							href = href.replace(/\{(.+)\}/g, function (str, p1, offset, s) {
-								var value; 
-								if (p1 === selfReferenceVariable) {
-									value = instance.getValue();
-								} else {
-									value = instance.getValueOfProperty(p1);
-								}
-								return value !== undefined ? String(value) : "";
-							});
-							return href ? JSV.formatURI(instance.resolveURI(href)) : href;
-						});
-					}
-					
-					return links;
-				},
-				
-				"selfReferenceVariable" : "-this"
-			},
-			
-			"fragmentResolution" : {
-				"type" : "string",
-				"optional" : true,
-				"default" : "dot-delimited"
-			},
-			
-			"root" : {
-				"type" : "boolean",
-				"optional" : true,
-				"default" : false
-			},
-			
-			"readonly" : {
-				"type" : "boolean",
-				"optional" : true,
-				"default" : false
-			},
-			
-			"pathStart" : {
-				"type" : "string",
-				"optional" : true,
-				"format" : "uri",
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var pathStart;
-					if (instance.getType() !== "undefined") {
-						pathStart = schema.getAttribute("pathStart");
-						if (typeof pathStart === "string") {
-							//TODO: Find out what pathStart is relative to
-							if (instance.getURI().indexOf(pathStart) !== 0) {
-								report.addError(instance, schema, "pathStart", "Instance's URI does not start with " + pathStart, pathStart);
-							}
-						}
-					}
-				}
-			},
-			
-			"mediaType" : {
-				"type" : "string",
-				"optional" : true,
-				"format" : "media-type"
-			},
-			
-			"alternate" : {
-				"type" : "array",
-				"items" : {"$ref" : "#"},
-				"optional" : true
-			}
-		},
-		
-		"links" : [
-			{
-				"href" : "{$ref}",
-				"rel" : "full"
-			},
-			
-			{
-				"href" : "{$schema}",
-				"rel" : "describedby"
-			},
-			
-			{
-				"href" : "{id}",
-				"rel" : "self"
-			}
-		],
-				
-		"initializer" : function (instance) {
-			var link, extension, extended;
-			
-			//if there is a link to a different schema, set reference
-			link = instance._schema.getLink("describedby", instance);
-			if (link && instance._schema._uri !== link) {
-				instance.setReference("describedby", link);
-			}
-			
-			//if instance has a URI link to itself, update it's own URI
-			link = instance._schema.getLink("self", instance);
-			if (JSV.typeOf(link) === "string") {
-				instance._uri = JSV.formatURI(link);
-			}
-			
-			//if there is a link to the full representation, set reference
-			link = instance._schema.getLink("full", instance);
-			if (link && instance._uri !== link) {
-				instance.setReference("full", link);
-			}
-			
-			//extend schema
-			extension = instance.getAttribute("extends");
-			if (JSV.isJSONSchema(extension)) {
-				extended = JSV.inherits(extension, instance, true);
-				instance = instance._env.createSchema(extended, instance._schema, instance._uri);
-			}
-			
-			return instance;
-		}
-		
-		//not needed as JSV.inherits does the job for us
-		//"extends" : {"$ref" : "http://json-schema.org/schema#"}
-	};
-	
-	LINKS_00_JSON = {
-		"$schema" : "http://json-schema.org/draft-00/hyper-schema#",
-		"id" : "http://json-schema.org/draft-00/links#",
-		"type" : "object",
-		
-		"properties" : {
-			"href" : {
-				"type" : "string"
-			},
-			
-			"rel" : {
-				"type" : "string"
-			},
-			
-			"method" : {
-				"type" : "string",
-				"default" : "GET",
-				"optional" : true
-			},
-			
-			"enctype" : {
-				"type" : "string",
-				"requires" : "method",
-				"optional" : true
-			},
-			
-			"properties" : {
-				"type" : "object",
-				"additionalProperties" : {"$ref" : "hyper-schema#"},
-				"optional" : true,
-				
-				"parser" : function (instance, self, arg) {
-					var env = instance.getEnvironment(),
-						selfEnv = self.getEnvironment(),
-						additionalPropertiesSchemaURI = self.getValueOfProperty("additionalProperties")["$ref"];
-					if (instance.getType() === "object") {
-						if (arg) {
-							return env.createSchema(instance.getProperty(arg), selfEnv.findSchema(self.resolveURI(additionalPropertiesSchemaURI)));
-						} else {
-							return JSV.mapObject(instance.getProperties(), function (instance) {
-								return env.createSchema(instance, selfEnv.findSchema(self.resolveURI(additionalPropertiesSchemaURI)));
-							});
-						}
-					}
-				}
-			}
-		},
-		
-		"parser" : function (instance, self) {
-			var selfProperties = self.getProperty("properties");
-			if (instance.getType() === "object") {
-				return JSV.mapObject(instance.getProperties(), function (property, key) {
-					var propertySchema = selfProperties.getProperty(key),
-						parser = propertySchema && propertySchema.getValueOfProperty("parser");
-					if (typeof parser === "function") {
-						return parser(property, propertySchema);
-					}
-					//else
-					return property.getValue();
-				});
-			}
-			return instance.getValue();
-		}
-	};
-	
-	ENVIRONMENT.setOption("defaultFragmentDelimiter", ".");
-	ENVIRONMENT.setOption("defaultSchemaURI", "http://json-schema.org/draft-00/schema#");  //updated later
-	
-	SCHEMA_00 = ENVIRONMENT.createSchema(SCHEMA_00_JSON, true, "http://json-schema.org/draft-00/schema#");
-	HYPERSCHEMA_00 = ENVIRONMENT.createSchema(JSV.inherits(SCHEMA_00, ENVIRONMENT.createSchema(HYPERSCHEMA_00_JSON, true, "http://json-schema.org/draft-00/hyper-schema#"), true), true, "http://json-schema.org/draft-00/hyper-schema#");
-	
-	ENVIRONMENT.setOption("defaultSchemaURI", "http://json-schema.org/draft-00/hyper-schema#");
-	
-	LINKS_00 = ENVIRONMENT.createSchema(LINKS_00_JSON, HYPERSCHEMA_00, "http://json-schema.org/draft-00/links#");
-	
-	//
-	// draft-01
-	//
-		
-	SCHEMA_01_JSON = JSV.inherits(SCHEMA_00_JSON, {
-		"$schema" : "http://json-schema.org/draft-01/hyper-schema#",
-		"id" : "http://json-schema.org/draft-01/schema#"
-	});
-	
-	HYPERSCHEMA_01_JSON = JSV.inherits(HYPERSCHEMA_00_JSON, {
-		"$schema" : "http://json-schema.org/draft-01/hyper-schema#",
-		"id" : "http://json-schema.org/draft-01/hyper-schema#"
-	});
-	
-	LINKS_01_JSON = JSV.inherits(LINKS_00_JSON, {
-		"$schema" : "http://json-schema.org/draft-01/hyper-schema#",
-		"id" : "http://json-schema.org/draft-01/links#"
-	});
-	
-	ENVIRONMENT.setOption("defaultSchemaURI", "http://json-schema.org/draft-01/schema#");  //update later
-	
-	SCHEMA_01 = ENVIRONMENT.createSchema(SCHEMA_01_JSON, true, "http://json-schema.org/draft-01/schema#");
-	HYPERSCHEMA_01 = ENVIRONMENT.createSchema(JSV.inherits(SCHEMA_01, ENVIRONMENT.createSchema(HYPERSCHEMA_01_JSON, true, "http://json-schema.org/draft-01/hyper-schema#"), true), true, "http://json-schema.org/draft-01/hyper-schema#");
-	
-	ENVIRONMENT.setOption("defaultSchemaURI", "http://json-schema.org/draft-01/hyper-schema#");
-	
-	LINKS_01 = ENVIRONMENT.createSchema(LINKS_01_JSON, HYPERSCHEMA_01, "http://json-schema.org/draft-01/links#");
-	
-	//
-	// draft-02
-	//
-	
-	SCHEMA_02_JSON = JSV.inherits(SCHEMA_01_JSON, {
-		"$schema" : "http://json-schema.org/draft-02/hyper-schema#",
-		"id" : "http://json-schema.org/draft-02/schema#",
-		
-		"properties" : {
-			"uniqueItems" : {
-				"type" : "boolean",
-				"optional" : true,
-				"default" : false,
-				
-				"parser" : function (instance, self) {
-					return !!instance.getValue();
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var value, x, xl, y, yl;
-					if (instance.getType() === "array" && schema.getAttribute("uniqueItems")) {
-						value = instance.getProperties();
-						for (x = 0, xl = value.length - 1; x < xl; ++x) {
-							for (y = x + 1, yl = value.length; y < yl; ++y) {
-								if (value[x].equals(value[y])) {
-									report.addError(instance, schema, "uniqueItems", "Array can only contain unique items", { x : x, y : y });
-								}
-							}
-						}
-					}
-				}
-			},
-			
-			"maxDecimal" : {
-				"deprecated" : true
-			},
-			
-			"divisibleBy" : {
-				"type" : "number",
-				"minimum" : 0,
-				"minimumCanEqual" : false,
-				"optional" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "number") {
-						return instance.getValue();
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var divisor, value, digits;
-					if (instance.getType() === "number") {
-						divisor = schema.getAttribute("divisibleBy");
-						if (divisor === 0) {
-							report.addError(instance, schema, "divisibleBy", "Nothing is divisible by 0", divisor);
-						} else if (divisor !== 1) {
-							value = instance.getValue();
-							digits = Math.max((value.toString().split(".")[1] || " ").length, (divisor.toString().split(".")[1] || " ").length);
-							digits = parseFloat(((value / divisor) % 1).toFixed(digits));  //cut out floating point errors
-							if (0 < digits && digits < 1) {
-								report.addError(instance, schema, "divisibleBy", "Number is not divisible by " + divisor, divisor);
-							}
-						}
-					}
-				}
-			}
-		},
-		
-		"fragmentResolution" : "slash-delimited"
-	});
-	
-	HYPERSCHEMA_02_JSON = JSV.inherits(HYPERSCHEMA_01_JSON, {
-		"id" : "http://json-schema.org/draft-02/hyper-schema#",
-		
-		"properties" : {
-			"fragmentResolution" : {
-				"default" : "slash-delimited"
-			}
-		}
-	});
-	
-	LINKS_02_JSON = JSV.inherits(LINKS_01_JSON, {
-		"$schema" : "http://json-schema.org/draft-02/hyper-schema#",
-		"id" : "http://json-schema.org/draft-02/links#",
-		
-		"properties" : {
-			"targetSchema" : {
-				"$ref" : "hyper-schema#",
-				
-				//need this here because parsers are run before links are resolved
-				"parser" : HYPERSCHEMA_01.getAttribute("parser")
-			}
-		}
-	});
-	
-	ENVIRONMENT.setOption("defaultFragmentDelimiter", "/");
-	ENVIRONMENT.setOption("defaultSchemaURI", "http://json-schema.org/draft-02/schema#");  //update later
-	
-	SCHEMA_02 = ENVIRONMENT.createSchema(SCHEMA_02_JSON, true, "http://json-schema.org/draft-02/schema#");
-	HYPERSCHEMA_02 = ENVIRONMENT.createSchema(JSV.inherits(SCHEMA_02, ENVIRONMENT.createSchema(HYPERSCHEMA_02_JSON, true, "http://json-schema.org/draft-02/hyper-schema#"), true), true, "http://json-schema.org/draft-02/hyper-schema#");
-	
-	ENVIRONMENT.setOption("defaultSchemaURI", "http://json-schema.org/draft-02/hyper-schema#");
-	
-	LINKS_02 = ENVIRONMENT.createSchema(LINKS_02_JSON, HYPERSCHEMA_02, "http://json-schema.org/draft-02/links#");
-	
-	//
-	// draft-03
-	//
-	
-	function getMatchedPatternProperties(instance, schema, report, self) {
-		var matchedProperties = {}, patternProperties, pattern, regexp, properties, key;
-		
-		if (instance.getType() === "object") {
-			patternProperties = schema.getAttribute("patternProperties");
-			properties = instance.getProperties();
-			for (pattern in patternProperties) {
-				if (patternProperties[pattern] !== O[pattern]) {
-					regexp = null;
-					try {
-						regexp = new RegExp(pattern);
-					} catch (e) {
-						if (report) {
-							report.addError(schema, self, "patternProperties", "Invalid pattern", pattern);
-						}
-					}
-					
-					if (regexp) {
-						for (key in properties) {
-							if (properties[key] !== O[key]  && regexp.test(key)) {
-								matchedProperties[key] = matchedProperties[key] ? JSV.pushUnique(matchedProperties[key], patternProperties[pattern]) : [ patternProperties[pattern] ];
-							}
-						}
-					}
-				}
-			}
-		}
-		
-		return matchedProperties;
-	}
-	
-	SCHEMA_03_JSON = JSV.inherits(SCHEMA_02_JSON, {
-		"$schema" : "http://json-schema.org/draft-03/schema#",
-		"id" : "http://json-schema.org/draft-03/schema#",
-		
-		"properties" : {
-			"patternProperties" : {
-				"type" : "object",
-				"additionalProperties" : {"$ref" : "#"},
-				"default" : {},
-				
-				"parser" : SCHEMA_02.getValueOfProperty("properties")["properties"]["parser"],
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var matchedProperties, key, x;
-					if (instance.getType() === "object") {
-						matchedProperties = getMatchedPatternProperties(instance, schema, report, self);
-						for (key in matchedProperties) {
-							if (matchedProperties[key] !== O[key]) {
-								x = matchedProperties[key].length;
-								while (x--) {
-									matchedProperties[key][x].validate(instance.getProperty(key), report, instance, schema, key);
-								}
-							}
-						}
-					}
-				}
-			},
-			
-			"additionalProperties" : {
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var additionalProperties, propertySchemas, properties, matchedProperties, key;
-					if (instance.getType() === "object") {
-						additionalProperties = schema.getAttribute("additionalProperties");
-						propertySchemas = schema.getAttribute("properties") || {};
-						properties = instance.getProperties();
-						matchedProperties = getMatchedPatternProperties(instance, schema);
-						for (key in properties) {
-							if (properties[key] !== O[key] && properties[key] && propertySchemas[key] === O[key] && matchedProperties[key] === O[key]) {
-								if (JSV.isJSONSchema(additionalProperties)) {
-									additionalProperties.validate(properties[key], report, instance, schema, key);
-								} else if (additionalProperties === false) {
-									report.addError(instance, schema, "additionalProperties", "Additional properties are not allowed", additionalProperties);
-								}
-							}
-						}
-					}
-				}
-			},
-			
-			"items" : {
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var properties, items, x, xl, itemSchema, additionalItems;
-					
-					if (instance.getType() === "array") {
-						properties = instance.getProperties();
-						items = schema.getAttribute("items");
-						additionalItems = schema.getAttribute("additionalItems");
-						
-						if (JSV.typeOf(items) === "array") {
-							for (x = 0, xl = properties.length; x < xl; ++x) {
-								itemSchema = items[x] || additionalItems;
-								if (itemSchema !== false) {
-									itemSchema.validate(properties[x], report, instance, schema, x);
-								} else {
-									report.addError(instance, schema, "additionalItems", "Additional items are not allowed", itemSchema);
-								}
-							}
-						} else {
-							itemSchema = items || additionalItems;
-							for (x = 0, xl = properties.length; x < xl; ++x) {
-								itemSchema.validate(properties[x], report, instance, schema, x);
-							}
-						}
-					}
-				}
-			},
-			
-			"additionalItems" : {
-				"type" : [{"$ref" : "#"}, "boolean"],
-				"default" : {},
-				
-				"parser" : SCHEMA_02.getValueOfProperty("properties")["additionalProperties"]["parser"],
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var additionalItems, properties, x, xl;
-					//only validate if the "items" attribute is undefined
-					if (instance.getType() === "array" && schema.getProperty("items").getType() === "undefined") {
-						additionalItems = schema.getAttribute("additionalItems");
-						properties = instance.getProperties();
-						
-						if (additionalItems !== false) {
-							for (x = 0, xl = properties.length; x < xl; ++x) {
-								additionalItems.validate(properties[x], report, instance, schema, x);
-							}
-						} else if (properties.length) {
-							report.addError(instance, schema, "additionalItems", "Additional items are not allowed", additionalItems);
-						}
-					}
-				}
-			},
-			
-			"optional" : {
-				"validationRequired" : false,
-				"deprecated" : true
-			},
-			
-			"required" : {
-				"type" : "boolean",
-				"default" : false,
-				
-				"parser" : function (instance, self) {
-					return !!instance.getValue();
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					if (instance.getType() === "undefined" && schema.getAttribute("required")) {
-						report.addError(instance, schema, "required", "Property is required", true);
-					}
-				}
-			},
-			
-			"requires" : {
-				"deprecated" : true
-			},
-			
-			"dependencies" : {
-				"type" : "object",
-				"additionalProperties" : {
-					"type" : ["string", "array", {"$ref" : "#"}],
-					"items" : {
-						"type" : "string"
-					}
-				},
-				"default" : {},
-				
-				"parser" : function (instance, self, arg) {
-					function parseProperty(property) {
-						var type = property.getType();
-						if (type === "string" || type === "array") {
-							return property.getValue();
-						} else if (type === "object") {
-							return property.getEnvironment().createSchema(property, self.getEnvironment().findSchema(self.resolveURI("#")));
-						}
-					}
-					
-					if (instance.getType() === "object") {
-						if (arg) {
-							return parseProperty(instance.getProperty(arg));
-						} else {
-							return JSV.mapObject(instance.getProperties(), parseProperty);
-						}
-					}
-					//else
-					return {};
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var dependencies, key, dependency, type, x, xl;
-					if (instance.getType() === "object") {
-						dependencies = schema.getAttribute("dependencies");
-						for (key in dependencies) {
-							if (dependencies[key] !== O[key] && instance.getProperty(key).getType() !== "undefined") {
-								dependency = dependencies[key];
-								type = JSV.typeOf(dependency);
-								if (type === "string") {
-									if (instance.getProperty(dependency).getType() === "undefined") {
-										report.addError(instance, schema, "dependencies", 'Property "' + key + '" requires sibling property "' + dependency + '"', dependencies);
-									}
-								} else if (type === "array") {
-									for (x = 0, xl = dependency.length; x < xl; ++x) {
-										if (instance.getProperty(dependency[x]).getType() === "undefined") {
-											report.addError(instance, schema, "dependencies", 'Property "' + key + '" requires sibling property "' + dependency[x] + '"', dependencies);
-										}
-									}
-								} else if (JSV.isJSONSchema(dependency)) {
-									dependency.validate(instance, report);
-								}
-							}
-						}
-					}
-				}
-			},
-			
-			"minimumCanEqual" : {
-				"deprecated" : true
-			},
-			
-			"maximumCanEqual" : {
-				"deprecated" : true
-			},
-			
-			"exclusiveMinimum" : {
-				"type" : "boolean",
-				"default" : false,
-				
-				"parser" : function (instance, self) {
-					return !!instance.getValue();
-				}
-			},
-			
-			"exclusiveMaximum" : {
-				"type" : "boolean",
-				"default" : false,
-				
-				"parser" : function (instance, self) {
-					return !!instance.getValue();
-				}
-			},
-			
-			"minimum" : {
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var minimum, exclusiveMinimum;
-					if (instance.getType() === "number") {
-						minimum = schema.getAttribute("minimum");
-						exclusiveMinimum = schema.getAttribute("exclusiveMinimum") || (!instance.getEnvironment().getOption("strict") && !schema.getAttribute("minimumCanEqual"));
-						if (typeof minimum === "number" && (instance.getValue() < minimum || (exclusiveMinimum === true && instance.getValue() === minimum))) {
-							report.addError(instance, schema, "minimum", "Number is less than the required minimum value", minimum);
-						}
-					}
-				}
-			},
-			
-			"maximum" : {
-				"validator" : function (instance, schema, self, report, parent, parentSchema, name) {
-					var maximum, exclusiveMaximum;
-					if (instance.getType() === "number") {
-						maximum = schema.getAttribute("maximum");
-						exclusiveMaximum = schema.getAttribute("exclusiveMaximum") || (!instance.getEnvironment().getOption("strict") && !schema.getAttribute("maximumCanEqual"));
-						if (typeof maximum === "number" && (instance.getValue() > maximum || (exclusiveMaximum === true && instance.getValue() === maximum))) {
-							report.addError(instance, schema, "maximum", "Number is greater than the required maximum value", maximum);
-						}
-					}
-				}
-			},
-			
-			"contentEncoding" : {
-				"deprecated" : true
-			},
-			
-			"divisibleBy" : {
-				"exclusiveMinimum" : true
-			},
-			
-			"disallow" : {
-				"items" : {
-					"type" : ["string", {"$ref" : "#"}]
-				},
-				
-				"parser" : SCHEMA_02_JSON["properties"]["type"]["parser"]
-			},
-			
-			"id" : {
-				"type" : "string",
-				"format" : "uri"
-			},
-			
-			"$ref" : {
-				"type" : "string",
-				"format" : "uri"
-			},
-			
-			"$schema" : {
-				"type" : "string",
-				"format" : "uri"
-			}
-		},
-		
-		"dependencies" : {
-			"exclusiveMinimum" : "minimum",
-			"exclusiveMaximum" : "maximum"
-		},
-		
-		"initializer" : function (instance) {
-			var link, extension, extended,
-				schemaLink = instance.getValueOfProperty("$schema"),
-				refLink = instance.getValueOfProperty("$ref"),
-				idLink = instance.getValueOfProperty("id");
-			
-			//if there is a link to a different schema, set reference
-			if (schemaLink) {
-				link = instance.resolveURI(schemaLink);
-				instance.setReference("describedby", link);
-			}
-			
-			//if instance has a URI link to itself, update it's own URI
-			if (idLink) {
-				link = instance.resolveURI(idLink);
-				if (JSV.typeOf(link) === "string") {
-					instance._uri = JSV.formatURI(link);
-				}
-			}
-			
-			//if there is a link to the full representation, set reference
-			if (refLink) {
-				link = instance.resolveURI(refLink);
-				instance.setReference("full", link);
-			}
-			
-			//extend schema
-			extension = instance.getAttribute("extends");
-			if (JSV.isJSONSchema(extension)) {
-				extended = JSV.inherits(extension, instance, true);
-				instance = instance._env.createSchema(extended, instance._schema, instance._uri);
-			}
-			
-			return instance;
-		}
-	});
-	
-	HYPERSCHEMA_03_JSON = JSV.inherits(HYPERSCHEMA_02_JSON, {
-		"$schema" : "http://json-schema.org/draft-03/hyper-schema#",
-		"id" : "http://json-schema.org/draft-03/hyper-schema#",
-		
-		"properties" : {
-			"links" : {
-				"selfReferenceVariable" : "@"
-			},
-			
-			"root" : {
-				"deprecated" : true
-			},
-			
-			"contentEncoding" : {
-				"deprecated" : false  //moved from core to hyper
-			},
-			
-			"alternate" : {
-				"deprecated" : true
-			}
-		}
-	});
-	
-	LINKS_03_JSON = JSV.inherits(LINKS_02_JSON, {
-		"$schema" : "http://json-schema.org/draft-03/hyper-schema#",
-		"id" : "http://json-schema.org/draft-03/links#",
-		
-		"properties" : {
-			"href" : {
-				"required" : true,
-				"format" : "link-description-object-template"
-			},
-			
-			"rel" : {
-				"required" : true
-			},
-			
-			"properties" : {
-				"deprecated" : true
-			},
-			
-			"schema" : {"$ref" : "http://json-schema.org/draft-03/hyper-schema#"}
-		}
-	});
-	
-	ENVIRONMENT.setOption("defaultSchemaURI", "http://json-schema.org/draft-03/schema#");  //update later
-	
-	SCHEMA_03 = ENVIRONMENT.createSchema(SCHEMA_03_JSON, true, "http://json-schema.org/draft-03/schema#");
-	HYPERSCHEMA_03 = ENVIRONMENT.createSchema(JSV.inherits(SCHEMA_03, ENVIRONMENT.createSchema(HYPERSCHEMA_03_JSON, true, "http://json-schema.org/draft-03/hyper-schema#"), true), true, "http://json-schema.org/draft-03/hyper-schema#");
-	
-	ENVIRONMENT.setOption("defaultSchemaURI", "http://json-schema.org/draft-03/hyper-schema#");
-	
-	LINKS_03 = ENVIRONMENT.createSchema(LINKS_03_JSON, true, "http://json-schema.org/draft-03/links#");
-	
-	ENVIRONMENT.setOption("latestJSONSchemaSchemaURI", "http://json-schema.org/draft-03/schema#");
-	ENVIRONMENT.setOption("latestJSONSchemaHyperSchemaURI", "http://json-schema.org/draft-03/hyper-schema#");
-	ENVIRONMENT.setOption("latestJSONSchemaLinksURI", "http://json-schema.org/draft-03/links#");
-	
-	//
-	//Latest JSON Schema
-	//
-	
-	//Hack, but WAY faster than instantiating a new schema
-	ENVIRONMENT._schemas["http://json-schema.org/schema#"] = SCHEMA_03;
-	ENVIRONMENT._schemas["http://json-schema.org/hyper-schema#"] = HYPERSCHEMA_03;
-	ENVIRONMENT._schemas["http://json-schema.org/links#"] = LINKS_03;
-	
-	//
-	//register environment
-	//
-	
-	JSV.registerEnvironment("json-schema-draft-03", ENVIRONMENT);
-	if (!JSV.getDefaultEnvironmentID() || JSV.getDefaultEnvironmentID() === "json-schema-draft-01" || JSV.getDefaultEnvironmentID() === "json-schema-draft-02") {
-		JSV.setDefaultEnvironmentID("json-schema-draft-03");
-	}
-	
-}());
-},{"./jsv":11}],11:[function(require,module,exports){
-/**
- * JSV: JSON Schema Validator
- * 
- * @fileOverview A JavaScript implementation of a extendable, fully compliant JSON Schema validator.
- * @author <a href="mailto:gary.court@gmail.com">Gary Court</a>
- * @version 4.0.2
- * @see http://github.com/garycourt/JSV
- */
-
-/*
- * Copyright 2010 Gary Court. All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without modification, are
- * permitted provided that the following conditions are met:
- * 
- *    1. Redistributions of source code must retain the above copyright notice, this list of
- *       conditions and the following disclaimer.
- * 
- *    2. Redistributions in binary form must reproduce the above copyright notice, this list
- *       of conditions and the following disclaimer in the documentation and/or other materials
- *       provided with the distribution.
- * 
- * THIS SOFTWARE IS PROVIDED BY GARY COURT ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL GARY COURT OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
- * The views and conclusions contained in the software and documentation are those of the
- * authors and should not be interpreted as representing official policies, either expressed
- * or implied, of Gary Court or the JSON Schema specification.
- */
-
-/*jslint white: true, sub: true, onevar: true, undef: true, eqeqeq: true, newcap: true, immed: true, indent: 4 */
-
-var exports = exports || this,
-	require = require || function () {
-		return exports;
-	};
-
-(function () {
-	
-	var URI = require("./uri/uri").URI,
-		O = {},
-		I2H = "0123456789abcdef".split(""),
-		mapArray, filterArray, searchArray,
-		
-		JSV;
-	
-	//
-	// Utility functions
-	//
-	
-	function typeOf(o) {
-		return o === undefined ? "undefined" : (o === null ? "null" : Object.prototype.toString.call(o).split(" ").pop().split("]").shift().toLowerCase());
-	}
-	
-	/** @inner */
-	function F() {}
-	
-	function createObject(proto) {
-		F.prototype = proto || {};
-		return new F();
-	}
-	
-	function mapObject(obj, func, scope) {
-		var newObj = {}, key;
-		for (key in obj) {
-			if (obj[key] !== O[key]) {
-				newObj[key] = func.call(scope, obj[key], key, obj);
-			}
-		}
-		return newObj;
-	}
-	
-	/** @ignore */
-	mapArray = function (arr, func, scope) {
-		var x = 0, xl = arr.length, newArr = new Array(xl);
-		for (; x < xl; ++x) {
-			newArr[x] = func.call(scope, arr[x], x, arr);
-		}
-		return newArr;
-	};
-		
-	if (Array.prototype.map) {
-		/** @ignore */
-		mapArray = function (arr, func, scope) {
-			return Array.prototype.map.call(arr, func, scope);
-		};
-	}
-	
-	/** @ignore */
-	filterArray = function (arr, func, scope) {
-		var x = 0, xl = arr.length, newArr = [];
-		for (; x < xl; ++x) {
-			if (func.call(scope, arr[x], x, arr)) {
-				newArr[newArr.length] = arr[x];
-			}
-		}
-		return newArr;
-	};
-	
-	if (Array.prototype.filter) {
-		/** @ignore */
-		filterArray = function (arr, func, scope) {
-			return Array.prototype.filter.call(arr, func, scope);
-		};
-	}
-	
-	/** @ignore */
-	searchArray = function (arr, o) {
-		var x = 0, xl = arr.length;
-		for (; x < xl; ++x) {
-			if (arr[x] === o) {
-				return x;
-			}
-		}
-		return -1;
-	};
-	
-	if (Array.prototype.indexOf) {
-		/** @ignore */
-		searchArray = function (arr, o) {
-			return Array.prototype.indexOf.call(arr, o);
-		};
-	}
-	
-	function toArray(o) {
-		return o !== undefined && o !== null ? (o instanceof Array && !o.callee ? o : (typeof o.length !== "number" || o.split || o.setInterval || o.call ? [ o ] : Array.prototype.slice.call(o))) : [];
-	}
-	
-	function keys(o) {
-		var result = [], key;
-		
-		switch (typeOf(o)) {
-		case "object":
-			for (key in o) {
-				if (o[key] !== O[key]) {
-					result[result.length] = key;
-				}
-			}
-			break;
-		case "array":
-			for (key = o.length - 1; key >= 0; --key) {
-				result[key] = key;
-			}
-			break;
-		}
-		
-		return result;
-	}
-	
-	function pushUnique(arr, o) {
-		if (searchArray(arr, o) === -1) {
-			arr.push(o);
-		}
-		return arr;
-	}
-	
-	function popFirst(arr, o) {
-		var index = searchArray(arr, o);
-		if (index > -1) {
-			arr.splice(index, 1);
-		}
-		return arr;
-	}
-	
-	function randomUUID() {
-		return [
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			"-",
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			"-4",  //set 4 high bits of time_high field to version
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			"-",
-			I2H[(Math.floor(Math.random() * 0x10) & 0x3) | 0x8],  //specify 2 high bits of clock sequence
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			"-",
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)],
-			I2H[Math.floor(Math.random() * 0x10)]
-		].join("");
-	}
-	
-	function escapeURIComponent(str) {
-		return encodeURIComponent(str).replace(/!/g, '%21').replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/\*/g, '%2A');
-	}
-	
-	function formatURI(uri) {
-		if (typeof uri === "string" && uri.indexOf("#") === -1) {
-			uri += "#";
-		}
-		return uri;
-	}
-	
-	function stripInstances(o) {
-		if (o instanceof JSONInstance) {
-			return o.getURI();
-		}
-		
-		switch (typeOf(o)) {
-		case "undefined":
-		case "null":
-		case "boolean":
-		case "number":
-		case "string":
-			return o;  //do nothing
-		
-		case "object":
-			return mapObject(o, stripInstances);
-		
-		case "array":
-			return mapArray(o, stripInstances);
-		
-		default:
-			return o.toString();
-		}
-	}
-	
-	/**
-	 * The exception that is thrown when a schema fails to be created.
-	 * 
-	 * @name InitializationError
-	 * @class
-	 * @param {JSONInstance|String} instance The instance (or instance URI) that is invalid
-	 * @param {JSONSchema|String} schema The schema (or schema URI) that was validating the instance
-	 * @param {String} attr The attribute that failed to validated
-	 * @param {String} message A user-friendly message on why the schema attribute failed to validate the instance
-	 * @param {Any} details The value of the schema attribute
-	 */
-	
-	function InitializationError(instance, schema, attr, message, details) {
-		Error.call(this, message);
-		
-		this.uri = instance instanceof JSONInstance ? instance.getURI() : instance;
-		this.schemaUri = schema instanceof JSONInstance ? schema.getURI() : schema;
-		this.attribute = attr;
-		this.message = message;
-		this.description = message;  //IE
-		this.details = details;
-	}
-	
-	InitializationError.prototype = new Error();
-	InitializationError.prototype.constructor = InitializationError;
-	InitializationError.prototype.name = "InitializationError";
-	
-	/**
-	 * Defines an error, found by a schema, with an instance.
-	 * This class can only be instantiated by {@link Report#addError}. 
-	 * 
-	 * @name ValidationError
-	 * @class
-	 * @see Report#addError
-	 */
-	
-	/**
-	 * The URI of the instance that has the error.
-	 * 
-	 * @name ValidationError.prototype.uri
-	 * @type String
-	 */
-	
-	/**
-	 * The URI of the schema that generated the error.
-	 * 
-	 * @name ValidationError.prototype.schemaUri
-	 * @type String
-	 */
-	
-	/**
-	 * The name of the schema attribute that generated the error.
-	 * 
-	 * @name ValidationError.prototype.attribute
-	 * @type String
-	 */
-	
-	/**
-	 * An user-friendly (English) message about what failed to validate.
-	 * 
-	 * @name ValidationError.prototype.message
-	 * @type String
-	 */
-	
-	/**
-	 * The value of the schema attribute that generated the error.
-	 * 
-	 * @name ValidationError.prototype.details
-	 * @type Any
-	 */
-	
-	/**
-	 * Reports are returned from validation methods to describe the result of a validation.
-	 * 
-	 * @name Report
-	 * @class
-	 * @see JSONSchema#validate
-	 * @see Environment#validate
-	 */
-	
-	function Report() {
-		/**
-		 * An array of {@link ValidationError} objects that define all the errors generated by the schema against the instance.
-		 * 
-		 * @name Report.prototype.errors
-		 * @type Array
-		 * @see Report#addError
-		 */
-		this.errors = [];
-		
-		/**
-		 * A hash table of every instance and what schemas were validated against it.
-		 * <p>
-		 * The key of each item in the table is the URI of the instance that was validated.
-		 * The value of this key is an array of strings of URIs of the schema that validated it.
-		 * </p>
-		 * 
-		 * @name Report.prototype.validated
-		 * @type Object
-		 * @see Report#registerValidation
-		 * @see Report#isValidatedBy
-		 */
-		this.validated = {};
-		
-		/**
-		 * If the report is generated by {@link Environment#validate}, this field is the generated instance.
-		 * 
-		 * @name Report.prototype.instance
-		 * @type JSONInstance
-		 * @see Environment#validate
-		 */
-		
-		/**
-		 * If the report is generated by {@link Environment#validate}, this field is the generated schema.
-		 * 
-		 * @name Report.prototype.schema
-		 * @type JSONSchema
-		 * @see Environment#validate
-		 */
-		 
-		/**
-		 * If the report is generated by {@link Environment#validate}, this field is the schema's schema.
-		 * This value is the same as calling <code>schema.getSchema()</code>.
-		 * 
-		 * @name Report.prototype.schemaSchema
-		 * @type JSONSchema
-		 * @see Environment#validate
-		 * @see JSONSchema#getSchema
-		 */
-	}
-	
-	/**
-	 * Adds a {@link ValidationError} object to the <a href="#errors"><code>errors</code></a> field.
-	 * 
-	 * @param {JSONInstance|String} instance The instance (or instance URI) that is invalid
-	 * @param {JSONSchema|String} schema The schema (or schema URI) that was validating the instance
-	 * @param {String} attr The attribute that failed to validated
-	 * @param {String} message A user-friendly message on why the schema attribute failed to validate the instance
-	 * @param {Any} details The value of the schema attribute
-	 */
-	
-	Report.prototype.addError = function (instance, schema, attr, message, details) {
-		this.errors.push({
-			uri : instance instanceof JSONInstance ? instance.getURI() : instance,
-			schemaUri : schema instanceof JSONInstance ? schema.getURI() : schema,
-			attribute : attr,
-			message : message,
-			details : stripInstances(details)
-		});
-	};
-	
-	/**
-	 * Registers that the provided instance URI has been validated by the provided schema URI. 
-	 * This is recorded in the <a href="#validated"><code>validated</code></a> field.
-	 * 
-	 * @param {String} uri The URI of the instance that was validated
-	 * @param {String} schemaUri The URI of the schema that validated the instance
-	 */
-	
-	Report.prototype.registerValidation = function (uri, schemaUri) {
-		if (!this.validated[uri]) {
-			this.validated[uri] = [ schemaUri ];
-		} else {
-			this.validated[uri].push(schemaUri);
-		}
-	};
-	
-	/**
-	 * Returns if an instance with the provided URI has been validated by the schema with the provided URI. 
-	 * 
-	 * @param {String} uri The URI of the instance
-	 * @param {String} schemaUri The URI of a schema
-	 * @returns {Boolean} If the instance has been validated by the schema.
-	 */
-	
-	Report.prototype.isValidatedBy = function (uri, schemaUri) {
-		return !!this.validated[uri] && searchArray(this.validated[uri], schemaUri) !== -1;
-	};
-	
-	/**
-	 * A wrapper class for binding an Environment, URI and helper methods to an instance. 
-	 * This class is most commonly instantiated with {@link Environment#createInstance}.
-	 * 
-	 * @name JSONInstance
-	 * @class
-	 * @param {Environment} env The environment this instance belongs to
-	 * @param {JSONInstance|Any} json The value of the instance
-	 * @param {String} [uri] The URI of the instance. If undefined, the URI will be a randomly generated UUID. 
-	 * @param {String} [fd] The fragment delimiter for properties. If undefined, uses the environment default.
-	 */
-	
-	function JSONInstance(env, json, uri, fd) {
-		if (json instanceof JSONInstance) {
-			if (typeof fd !== "string") {
-				fd = json._fd;
-			}
-			if (typeof uri !== "string") {
-				uri = json._uri;
-			}
-			json = json._value;
-		}
-		
-		if (typeof uri !== "string") {
-			uri = "urn:uuid:" + randomUUID() + "#";
-		} else if (uri.indexOf(":") === -1) {
-			uri = formatURI(URI.resolve("urn:uuid:" + randomUUID() + "#", uri));
-		}
-		
-		this._env = env;
-		this._value = json;
-		this._uri = uri;
-		this._fd = fd || this._env._options["defaultFragmentDelimiter"];
-	}
-	
-	/**
-	 * Returns the environment the instance is bound to.
-	 * 
-	 * @returns {Environment} The environment of the instance
-	 */
-	
-	JSONInstance.prototype.getEnvironment = function () {
-		return this._env;
-	};
-	
-	/**
-	 * Returns the name of the type of the instance.
-	 * 
-	 * @returns {String} The name of the type of the instance
-	 */
-	
-	JSONInstance.prototype.getType = function () {
-		return typeOf(this._value);
-	};
-	
-	/**
-	 * Returns the JSON value of the instance.
-	 * 
-	 * @returns {Any} The actual JavaScript value of the instance
-	 */
-	
-	JSONInstance.prototype.getValue = function () {
-		return this._value;
-	};
-	
-	/**
-	 * Returns the URI of the instance.
-	 * 
-	 * @returns {String} The URI of the instance
-	 */
-	
-	JSONInstance.prototype.getURI = function () {
-		return this._uri;
-	};
-	
-	/**
-	 * Returns a resolved URI of a provided relative URI against the URI of the instance.
-	 * 
-	 * @param {String} uri The relative URI to resolve
-	 * @returns {String} The resolved URI
-	 */
-	
-	JSONInstance.prototype.resolveURI = function (uri) {
-		return formatURI(URI.resolve(this._uri, uri));
-	};
-	
-	/**
-	 * Returns an array of the names of all the properties.
-	 * 
-	 * @returns {Array} An array of strings which are the names of all the properties
-	 */
-	
-	JSONInstance.prototype.getPropertyNames = function () {
-		return keys(this._value);
-	};
-	
-	/**
-	 * Returns a {@link JSONInstance} of the value of the provided property name. 
-	 * 
-	 * @param {String} key The name of the property to fetch
-	 * @returns {JSONInstance} The instance of the property value
-	 */
-	
-	JSONInstance.prototype.getProperty = function (key) {
-		var value = this._value ? this._value[key] : undefined;
-		if (value instanceof JSONInstance) {
-			return value;
-		}
-		//else
-		return new JSONInstance(this._env, value, this._uri + this._fd + escapeURIComponent(key), this._fd);
-	};
-	
-	/**
-	 * Returns all the property instances of the target instance.
-	 * <p>
-	 * If the target instance is an Object, then the method will return a hash table of {@link JSONInstance}s of all the properties. 
-	 * If the target instance is an Array, then the method will return an array of {@link JSONInstance}s of all the items.
-	 * </p> 
-	 * 
-	 * @returns {Object|Array|undefined} The list of instances for all the properties
-	 */
-	
-	JSONInstance.prototype.getProperties = function () {
-		var type = typeOf(this._value),
-			self = this;
-		
-		if (type === "object") {
-			return mapObject(this._value, function (value, key) {
-				if (value instanceof JSONInstance) {
-					return value;
-				}
-				return new JSONInstance(self._env, value, self._uri + self._fd + escapeURIComponent(key), self._fd);
-			});
-		} else if (type === "array") {
-			return mapArray(this._value, function (value, key) {
-				if (value instanceof JSONInstance) {
-					return value;
-				}
-				return new JSONInstance(self._env, value, self._uri + self._fd + escapeURIComponent(key), self._fd);
-			});
-		}
-	};
-	
-	/**
-	 * Returns the JSON value of the provided property name. 
-	 * This method is a faster version of calling <code>instance.getProperty(key).getValue()</code>.
-	 * 
-	 * @param {String} key The name of the property
-	 * @returns {Any} The JavaScript value of the instance
-	 * @see JSONInstance#getProperty
-	 * @see JSONInstance#getValue
-	 */
-	
-	JSONInstance.prototype.getValueOfProperty = function (key) {
-		if (this._value) {
-			if (this._value[key] instanceof JSONInstance) {
-				return this._value[key]._value;
-			}
-			return this._value[key];
-		}
-	};
-	
-	/**
-	 * Return if the provided value is the same as the value of the instance.
-	 * 
-	 * @param {JSONInstance|Any} instance The value to compare
-	 * @returns {Boolean} If both the instance and the value match
-	 */
-	
-	JSONInstance.prototype.equals = function (instance) {
-		if (instance instanceof JSONInstance) {
-			return this._value === instance._value;
-		}
-		//else
-		return this._value === instance;
-	};
-	
-	/**
-	 * Warning: Not a generic clone function
-	 * Produces a JSV acceptable clone
-	 */
-	
-	function clone(obj, deep) {
-		var newObj, x;
-		
-		if (obj instanceof JSONInstance) {
-			obj = obj.getValue();
-		}
-		
-		switch (typeOf(obj)) {
-		case "object":
-			if (deep) {
-				newObj = {};
-				for (x in obj) {
-					if (obj[x] !== O[x]) {
-						newObj[x] = clone(obj[x], deep);
-					}
-				}
-				return newObj;
-			} else {
-				return createObject(obj);
-			}
-			break;
-		case "array":
-			if (deep) {
-				newObj = new Array(obj.length);
-				x = obj.length;
-				while (--x >= 0) {
-					newObj[x] = clone(obj[x], deep);
-				}
-				return newObj;
-			} else {
-				return Array.prototype.slice.call(obj);
-			}
-			break;
-		default:
-			return obj;
-		}
-	}
-	
-	/**
-	 * This class binds a {@link JSONInstance} with a {@link JSONSchema} to provided context aware methods. 
-	 * 
-	 * @name JSONSchema
-	 * @class
-	 * @param {Environment} env The environment this schema belongs to
-	 * @param {JSONInstance|Any} json The value of the schema
-	 * @param {String} [uri] The URI of the schema. If undefined, the URI will be a randomly generated UUID. 
-	 * @param {JSONSchema|Boolean} [schema] The schema to bind to the instance. If <code>undefined</code>, the environment's default schema will be used. If <code>true</code>, the instance's schema will be itself.
-	 * @extends JSONInstance
-	 */
-	
-	function JSONSchema(env, json, uri, schema) {
-		var fr;
-		JSONInstance.call(this, env, json, uri);
-		
-		if (schema === true) {
-			this._schema = this;
-		} else if (json instanceof JSONSchema && !(schema instanceof JSONSchema)) {
-			this._schema = json._schema;  //TODO: Make sure cross environments don't mess everything up
-		} else {
-			this._schema = schema instanceof JSONSchema ? schema : this._env.getDefaultSchema() || this._env.createEmptySchema();
-		}
-		
-		//determine fragment delimiter from schema
-		fr = this._schema.getValueOfProperty("fragmentResolution");
-		if (fr === "dot-delimited") {
-			this._fd = ".";
-		} else if (fr === "slash-delimited") {
-			this._fd = "/";
-		}
-		
-		return this.rebuild();  //this works even when called with "new"
-	}
-	
-	JSONSchema.prototype = createObject(JSONInstance.prototype);
-	
-	/**
-	 * Returns the schema of the schema.
-	 * 
-	 * @returns {JSONSchema} The schema of the schema
-	 */
-	
-	JSONSchema.prototype.getSchema = function () {
-		var uri = this._refs && this._refs["describedby"],
-			newSchema;
-		
-		if (uri) {
-			newSchema = uri && this._env.findSchema(uri);
-			
-			if (newSchema) {
-				if (!newSchema.equals(this._schema)) {
-					this._schema = newSchema;
-					this.rebuild();  //if the schema has changed, the context has changed - so everything must be rebuilt
-				}
-			} else if (this._env._options["enforceReferences"]) {
-				throw new InitializationError(this, this._schema, "{describedby}", "Unknown schema reference", uri);
-			}
-		}
-		
-		return this._schema;
-	};
-	
-	/**
-	 * Returns the value of the provided attribute name.
-	 * <p>
-	 * This method is different from {@link JSONInstance#getProperty} as the named property 
-	 * is converted using a parser defined by the schema's schema before being returned. This
-	 * makes the return value of this method attribute dependent.
-	 * </p>
-	 * 
-	 * @param {String} key The name of the attribute
-	 * @param {Any} [arg] Some attribute parsers accept special arguments for returning resolved values. This is attribute dependent.
-	 * @returns {JSONSchema|Any} The value of the attribute
-	 */
-	
-	JSONSchema.prototype.getAttribute = function (key, arg) {
-		var schemaProperty, parser, property, result,
-			schema = this.getSchema();  //we do this here to make sure the "describedby" reference has not changed, and that the attribute cache is up-to-date
-		
-		if (!arg && this._attributes && this._attributes.hasOwnProperty(key)) {
-			return this._attributes[key];
-		}
-		
-		schemaProperty = schema.getProperty("properties").getProperty(key);
-		parser = schemaProperty.getValueOfProperty("parser");
-		property = this.getProperty(key);
-		if (typeof parser === "function") {
-			result = parser(property, schemaProperty, arg);
-			if (!arg && this._attributes) {
-				this._attributes[key] = result;
-			}
-			return result;
-		}
-		//else
-		return property.getValue();
-	};
-	
-	/**
-	 * Returns all the attributes of the schema.
-	 * 
-	 * @returns {Object} A map of all parsed attribute values
-	 */
-	
-	JSONSchema.prototype.getAttributes = function () {
-		var properties, schemaProperties, key, schemaProperty, parser,
-			schema = this.getSchema();  //we do this here to make sure the "describedby" reference has not changed, and that the attribute cache is up-to-date
-		
-		if (!this._attributes && this.getType() === "object") {
-			properties = this.getProperties();
-			schemaProperties = schema.getProperty("properties");
-			this._attributes = {};
-			for (key in properties) {
-				if (properties[key] !== O[key]) {
-					schemaProperty = schemaProperties && schemaProperties.getProperty(key);
-					parser = schemaProperty && schemaProperty.getValueOfProperty("parser");
-					if (typeof parser === "function") {
-						this._attributes[key] = parser(properties[key], schemaProperty);
-					} else {
-						this._attributes[key] = properties[key].getValue();
-					}
-				}
-			}
-		}
-		
-		return clone(this._attributes, false);
-	};
-	
-	/**
-	 * Convenience method for retrieving a link or link object from a schema. 
-	 * This method is the same as calling <code>schema.getAttribute("links", [rel, instance])[0];</code>.
-	 * 
-	 * @param {String} rel The link relationship
-	 * @param {JSONInstance} [instance] The instance to resolve any URIs from
-	 * @returns {String|Object|undefined} If <code>instance</code> is provided, a string containing the resolve URI of the link is returned.
-	 *   If <code>instance</code> is not provided, a link object is returned with details of the link.
-	 *   If no link with the provided relationship exists, <code>undefined</code> is returned.
-	 * @see JSONSchema#getAttribute
-	 */
-	
-	JSONSchema.prototype.getLink = function (rel, instance) {
-		var schemaLinks = this.getAttribute("links", [rel, instance]);
-		if (schemaLinks && schemaLinks.length && schemaLinks[schemaLinks.length - 1]) {
-			return schemaLinks[schemaLinks.length - 1];
-		}
-	};
-	
-	/**
-	 * Validates the provided instance against the target schema and returns a {@link Report}.
-	 * 
-	 * @param {JSONInstance|Any} instance The instance to validate; may be a {@link JSONInstance} or any JavaScript value
-	 * @param {Report} [report] A {@link Report} to concatenate the result of the validation to. If <code>undefined</code>, a new {@link Report} is created. 
-	 * @param {JSONInstance} [parent] The parent/containing instance of the provided instance
-	 * @param {JSONSchema} [parentSchema] The schema of the parent/containing instance
-	 * @param {String} [name] The name of the parent object's property that references the instance
-	 * @returns {Report} The result of the validation
-	 */
-	
-	JSONSchema.prototype.validate = function (instance, report, parent, parentSchema, name) {
-		var schemaSchema = this.getSchema(),
-			validator = schemaSchema.getValueOfProperty("validator");
-		
-		if (!(instance instanceof JSONInstance)) {
-			instance = this.getEnvironment().createInstance(instance);
-		}
-		
-		if (!(report instanceof Report)) {
-			report = new Report();
-		}
-		
-		if (this._env._options["validateReferences"] && this._refs) {
-			if (this._refs["describedby"] && !this._env.findSchema(this._refs["describedby"])) {
-				report.addError(this, this._schema, "{describedby}", "Unknown schema reference", this._refs["describedby"]);
-			}
-			if (this._refs["full"] && !this._env.findSchema(this._refs["full"])) {
-				report.addError(this, this._schema, "{full}", "Unknown schema reference", this._refs["full"]);
-			}
-		}
-		
-		if (typeof validator === "function" && !report.isValidatedBy(instance.getURI(), this.getURI())) {
-			report.registerValidation(instance.getURI(), this.getURI());
-			validator(instance, this, schemaSchema, report, parent, parentSchema, name);
-		}
-		
-		return report;
-	};
-	
-	/** @inner */
-	function createFullLookupWrapper(func) {
-		return /** @inner */ function fullLookupWrapper() {
-			var scope = this,
-				stack = [],
-				uri = scope._refs && scope._refs["full"],
-				schema;
-			
-			while (uri) {
-				schema = scope._env.findSchema(uri);
-				if (schema) {
-					if (schema._value === scope._value) {
-						break;
-					}
-					scope = schema;
-					stack.push(uri);
-					uri = scope._refs && scope._refs["full"];
-					if (stack.indexOf(uri) > -1) {
-						break;  //stop infinite loop
-					}
-				} else if (scope._env._options["enforceReferences"]) {
-					throw new InitializationError(scope, scope._schema, "{full}", "Unknown schema reference", uri);
-				} else {
-					uri = null;
-				}
-			}
-			return func.apply(scope, arguments);
-		};
-	}
-	
-	/**
-	 * Wraps all JSONInstance methods with a function that resolves the "full" reference.
-	 * 
-	 * @inner
-	 */
-	
-	(function () {
-		var key;
-		for (key in JSONSchema.prototype) {
-			if (JSONSchema.prototype[key] !== O[key] && typeOf(JSONSchema.prototype[key]) === "function") {
-				JSONSchema.prototype[key] = createFullLookupWrapper(JSONSchema.prototype[key]);
-			}
-		}
-	}());
-	
-	/**
-	 * Reinitializes/re-registers/rebuilds the schema.
-	 * <br/>
-	 * This is used internally, and should only be called when a schema's private variables are modified directly.
-	 * 
-	 * @private
-	 * @return {JSONSchema} The newly rebuilt schema
-	 */
-	
-	JSONSchema.prototype.rebuild = function () {
-		var instance = this,
-			initializer = instance.getSchema().getValueOfProperty("initializer");
-		
-		//clear previous built values
-		instance._refs = null;
-		instance._attributes = null;
-		
-		if (typeof initializer === "function") {
-			instance = initializer(instance);
-		}
-		
-		//register schema
-		instance._env._schemas[instance._uri] = instance;
-		
-		//build & cache the rest of the schema
-		instance.getAttributes();
-		
-		return instance;
-	};
-	
-	/**
-	 * Set the provided reference to the given value.
-	 * <br/>
-	 * References are used for establishing soft-links to other {@link JSONSchema}s.
-	 * Currently, the following references are natively supported:
-	 * <dl>
-	 *   <dt><code>full</code></dt>
-	 *   <dd>The value is the URI to the full instance of this instance.</dd>
-	 *   <dt><code>describedby</code></dt>
-	 *   <dd>The value is the URI to the schema of this instance.</dd>
-	 * </dl>
-	 * 
-	 * @param {String} name The name of the reference
-	 * @param {String} uri The URI of the schema to refer to
-	 */
-	
-	JSONSchema.prototype.setReference = function (name, uri) {
-		if (!this._refs) {
-			this._refs = {};
-		}
-		this._refs[name] = this.resolveURI(uri);
-	};
-	
-	/**
-	 * Returns the value of the provided reference name.
-	 * 
-	 * @param {String} name The name of the reference
-	 * @return {String} The value of the provided reference name
-	 */
-	
-	JSONSchema.prototype.getReference = function (name) {
-		return this._refs && this._refs[name];
-	};
-	
-	/**
-	 * Merges two schemas/instances together.
-	 */
-	
-	function inherits(base, extra, extension) {
-		var baseType = typeOf(base),
-			extraType = typeOf(extra),
-			child, x;
-		
-		if (extraType === "undefined") {
-			return clone(base, true);
-		} else if (baseType === "undefined" || extraType !== baseType) {
-			return clone(extra, true);
-		} else if (extraType === "object") {
-			if (base instanceof JSONSchema) {
-				base = base.getAttributes();
-			}
-			if (extra instanceof JSONSchema) {
-				extra = extra.getAttributes();
-				if (extra["extends"] && extension && extra["extends"] instanceof JSONSchema) {
-					extra["extends"] = [ extra["extends"] ];
-				}
-			}
-			child = clone(base, true);  //this could be optimized as some properties get overwritten
-			for (x in extra) {
-				if (extra[x] !== O[x]) {
-					child[x] = inherits(base[x], extra[x], extension);
-				}
-			}
-			return child;
-		} else {
-			return clone(extra, true);
-		}
-	}
-	
-	/**
-	 * An Environment is a sandbox of schemas thats behavior is different from other environments.
-	 * 
-	 * @name Environment
-	 * @class
-	 */
-	
-	function Environment() {
-		this._id = randomUUID();
-		this._schemas = {};
-		this._options = {};
-		
-		this.createSchema({}, true, "urn:jsv:empty-schema#");
-	}
-	
-	/**
-	 * Returns a clone of the target environment.
-	 * 
-	 * @returns {Environment} A new {@link Environment} that is a exact copy of the target environment 
-	 */
-	
-	Environment.prototype.clone = function () {
-		var env = new Environment();
-		env._schemas = createObject(this._schemas);
-		env._options = createObject(this._options);
-		
-		return env;
-	};
-	
-	/**
-	 * Returns a new {@link JSONInstance} of the provided data.
-	 * 
-	 * @param {JSONInstance|Any} data The value of the instance
-	 * @param {String} [uri] The URI of the instance. If undefined, the URI will be a randomly generated UUID. 
-	 * @returns {JSONInstance} A new {@link JSONInstance} from the provided data
-	 */
-	
-	Environment.prototype.createInstance = function (data, uri) {
-		uri = formatURI(uri);
-		
-		if (data instanceof JSONInstance && (!uri || data.getURI() === uri)) {
-			return data;
-		}
-
-		return new JSONInstance(this, data, uri);
-	};
-	
-	/**
-	 * Creates a new {@link JSONSchema} from the provided data, and registers it with the environment. 
-	 * 
-	 * @param {JSONInstance|Any} data The value of the schema
-	 * @param {JSONSchema|Boolean} [schema] The schema to bind to the instance. If <code>undefined</code>, the environment's default schema will be used. If <code>true</code>, the instance's schema will be itself.
-	 * @param {String} [uri] The URI of the schema. If undefined, the URI will be a randomly generated UUID. 
-	 * @returns {JSONSchema} A new {@link JSONSchema} from the provided data
-	 * @throws {InitializationError} If a schema that is not registered with the environment is referenced 
-	 */
-	
-	Environment.prototype.createSchema = function (data, schema, uri) {
-		uri = formatURI(uri);
-		
-		if (data instanceof JSONSchema && (!uri || data._uri === uri) && (!schema || data.getSchema().equals(schema))) {
-			return data;
-		}
-		
-		return new JSONSchema(this, data, uri, schema);
-	};
-	
-	/**
-	 * Creates an empty schema.
-	 * 
-	 * @returns {JSONSchema} The empty schema, who's schema is itself.
-	 */
-	
-	Environment.prototype.createEmptySchema = function () {
-		return this._schemas["urn:jsv:empty-schema#"];
-	};
-	
-	/**
-	 * Returns the schema registered with the provided URI.
-	 * 
-	 * @param {String} uri The absolute URI of the required schema
-	 * @returns {JSONSchema|undefined} The request schema, or <code>undefined</code> if not found
-	 */
-	
-	Environment.prototype.findSchema = function (uri) {
-		return this._schemas[formatURI(uri)];
-	};
-	
-	/**
-	 * Sets the specified environment option to the specified value.
-	 * 
-	 * @param {String} name The name of the environment option to set
-	 * @param {Any} value The new value of the environment option
-	 */
-	
-	Environment.prototype.setOption = function (name, value) {
-		this._options[name] = value;
-	};
-	
-	/**
-	 * Returns the specified environment option.
-	 * 
-	 * @param {String} name The name of the environment option to set
-	 * @returns {Any} The value of the environment option
-	 */
-	
-	Environment.prototype.getOption = function (name) {
-		return this._options[name];
-	};
-	
-	/**
-	 * Sets the default fragment delimiter of the environment.
-	 * 
-	 * @deprecated Use {@link Environment#setOption} with option "defaultFragmentDelimiter"
-	 * @param {String} fd The fragment delimiter character
-	 */
-	
-	Environment.prototype.setDefaultFragmentDelimiter = function (fd) {
-		if (typeof fd === "string" && fd.length > 0) {
-			this._options["defaultFragmentDelimiter"] = fd;
-		}
-	};
-	
-	/**
-	 * Returns the default fragment delimiter of the environment.
-	 * 
-	 * @deprecated Use {@link Environment#getOption} with option "defaultFragmentDelimiter"
-	 * @returns {String} The fragment delimiter character
-	 */
-	
-	Environment.prototype.getDefaultFragmentDelimiter = function () {
-		return this._options["defaultFragmentDelimiter"];
-	};
-	
-	/**
-	 * Sets the URI of the default schema for the environment.
-	 * 
-	 * @deprecated Use {@link Environment#setOption} with option "defaultSchemaURI"
-	 * @param {String} uri The default schema URI
-	 */
-	
-	Environment.prototype.setDefaultSchemaURI = function (uri) {
-		if (typeof uri === "string") {
-			this._options["defaultSchemaURI"] = formatURI(uri);
-		}
-	};
-	
-	/**
-	 * Returns the default schema of the environment.
-	 * 
-	 * @returns {JSONSchema} The default schema
-	 */
-	
-	Environment.prototype.getDefaultSchema = function () {
-		return this.findSchema(this._options["defaultSchemaURI"]);
-	};
-	
-	/**
-	 * Validates both the provided schema and the provided instance, and returns a {@link Report}. 
-	 * If the schema fails to validate, the instance will not be validated.
-	 * 
-	 * @param {JSONInstance|Any} instanceJSON The {@link JSONInstance} or JavaScript value to validate.
-	 * @param {JSONSchema|Any} schemaJSON The {@link JSONSchema} or JavaScript value to use in the validation. This will also be validated againt the schema's schema.
-	 * @returns {Report} The result of the validation
-	 */
-	
-	Environment.prototype.validate = function (instanceJSON, schemaJSON) {
-		var instance,
-			schema,
-			schemaSchema,
-			report = new Report();
-		
-		try {
-			instance = this.createInstance(instanceJSON);
-			report.instance = instance;
-		} catch (e) {
-			report.addError(e.uri, e.schemaUri, e.attribute, e.message, e.details);
-		}
-		
-		try {
-			schema = this.createSchema(schemaJSON);
-			report.schema = schema;
-			
-			schemaSchema = schema.getSchema();
-			report.schemaSchema = schemaSchema;
-		} catch (f) {
-			report.addError(f.uri, f.schemaUri, f.attribute, f.message, f.details);
-		}
-		
-		if (schemaSchema) {
-			schemaSchema.validate(schema, report);
-		}
-			
-		if (report.errors.length) {
-			return report;
-		}
-		
-		return schema.validate(instance, report);
-	};
-	
-	/**
-	 * @private
-	 */
-	
-	Environment.prototype._checkForInvalidInstances = function (stackSize, schemaURI) {
-		var result = [],
-			stack = [
-				[schemaURI, this._schemas[schemaURI]]
-			], 
-			counter = 0,
-			item, uri, instance, properties, key;
-		
-		while (counter++ < stackSize && stack.length) {
-			item = stack.shift();
-			uri = item[0];
-			instance = item[1];
-			
-			if (instance instanceof JSONSchema) {
-				if (this._schemas[instance._uri] !== instance) {
-					result.push("Instance " + uri + " does not match " + instance._uri);
-				} else {
-					//schema = instance.getSchema();
-					//stack.push([uri + "/{schema}", schema]);
-					
-					properties = instance.getAttributes();
-					for (key in properties) {
-						if (properties[key] !== O[key]) {
-							stack.push([uri + "/" + escapeURIComponent(key), properties[key]]);
-						}
-					}
-				}
-			} else if (typeOf(instance) === "object") {
-				properties = instance;
-				for (key in properties) {
-					if (properties.hasOwnProperty(key)) {
-						stack.push([uri + "/" + escapeURIComponent(key), properties[key]]);
-					}
-				}
-			} else if (typeOf(instance) === "array") {
-				properties = instance;
-				for (key = 0; key < properties.length; ++key) {
-					stack.push([uri + "/" + escapeURIComponent(key), properties[key]]);
-				}
-			}
-		}
-		
-		return result.length ? result : counter;
-	};
-	
-	/**
-	 * A globaly accessible object that provides the ability to create and manage {@link Environments},
-	 * as well as providing utility methods.
-	 * 
-	 * @namespace
-	 */
-	
-	JSV = {
-		_environments : {},
-		_defaultEnvironmentID : "",
-		
-		/**
-		 * Returns if the provide value is an instance of {@link JSONInstance}.
-		 * 
-		 * @param o The value to test
-		 * @returns {Boolean} If the provide value is an instance of {@link JSONInstance}
-		 */
-		
-		isJSONInstance : function (o) {
-			return o instanceof JSONInstance;
-		},
-		
-		/**
-		 * Returns if the provide value is an instance of {@link JSONSchema}.
-		 * 
-		 * @param o The value to test
-		 * @returns {Boolean} If the provide value is an instance of {@link JSONSchema}
-		 */
-		
-		isJSONSchema : function (o) {
-			return o instanceof JSONSchema;
-		},
-		
-		/**
-		 * Creates and returns a new {@link Environment} that is a clone of the environment registered with the provided ID.
-		 * If no environment ID is provided, the default environment is cloned.
-		 * 
-		 * @param {String} [id] The ID of the environment to clone. If <code>undefined</code>, the default environment ID is used.
-		 * @returns {Environment} A newly cloned {@link Environment}
-		 * @throws {Error} If there is no environment registered with the provided ID
-		 */
-		
-		createEnvironment : function (id) {
-			id = id || this._defaultEnvironmentID;
-			
-			if (!this._environments[id]) {
-				throw new Error("Unknown Environment ID");
-			}
-			//else
-			return this._environments[id].clone();
-		},
-		
-		Environment : Environment,
-		
-		/**
-		 * Registers the provided {@link Environment} with the provided ID.
-		 * 
-		 * @param {String} id The ID of the environment
-		 * @param {Environment} env The environment to register
-		 */
-		
-		registerEnvironment : function (id, env) {
-			id = id || (env || 0)._id;
-			if (id && !this._environments[id] && env instanceof Environment) {
-				env._id = id;
-				this._environments[id] = env;
-			}
-		},
-		
-		/**
-		 * Sets which registered ID is the default environment.
-		 * 
-		 * @param {String} id The ID of the registered environment that is default
-		 * @throws {Error} If there is no registered environment with the provided ID
-		 */
-		
-		setDefaultEnvironmentID : function (id) {
-			if (typeof id === "string") {
-				if (!this._environments[id]) {
-					throw new Error("Unknown Environment ID");
-				}
-				
-				this._defaultEnvironmentID = id;
-			}
-		},
-		
-		/**
-		 * Returns the ID of the default environment.
-		 * 
-		 * @returns {String} The ID of the default environment
-		 */
-		
-		getDefaultEnvironmentID : function () {
-			return this._defaultEnvironmentID;
-		},
-		
-		//
-		// Utility Functions
-		//
-		
-		/**
-		 * Returns the name of the type of the provided value.
-		 *
-		 * @event //utility
-		 * @param {Any} o The value to determine the type of
-		 * @returns {String} The name of the type of the value
-		 */
-		typeOf : typeOf,
-		
-		/**
-		 * Return a new object that inherits all of the properties of the provided object.
-		 *
-		 * @event //utility
-		 * @param {Object} proto The prototype of the new object
-		 * @returns {Object} A new object that inherits all of the properties of the provided object
-		 */
-		createObject : createObject,
-		
-		/**
-		 * Returns a new object with each property transformed by the iterator.
-		 *
-		 * @event //utility
-		 * @param {Object} obj The object to transform
-		 * @param {Function} iterator A function that returns the new value of the provided property
-		 * @param {Object} [scope] The value of <code>this</code> in the iterator
-		 * @returns {Object} A new object with each property transformed
-		 */
-		mapObject : mapObject,
-		
-		/**
-		 * Returns a new array with each item transformed by the iterator.
-		 * 
-		 * @event //utility
-		 * @param {Array} arr The array to transform
-		 * @param {Function} iterator A function that returns the new value of the provided item
-		 * @param {Object} scope The value of <code>this</code> in the iterator
-		 * @returns {Array} A new array with each item transformed
-		 */
-		mapArray : mapArray,
-		
-		/**
-		 * Returns a new array that only contains the items allowed by the iterator.
-		 *
-		 * @event //utility
-		 * @param {Array} arr The array to filter
-		 * @param {Function} iterator The function that returns true if the provided property should be added to the array
-		 * @param {Object} scope The value of <code>this</code> within the iterator
-		 * @returns {Array} A new array that contains the items allowed by the iterator
-		 */
-		filterArray : filterArray,
-		
-		/**
-		 * Returns the first index in the array that the provided item is located at.
-		 *
-		 * @event //utility
-		 * @param {Array} arr The array to search
-		 * @param {Any} o The item being searched for
-		 * @returns {Number} The index of the item in the array, or <code>-1</code> if not found
-		 */
-		searchArray : searchArray,
-			
-		/**
-		 * Returns an array representation of a value.
-		 * <ul>
-		 * <li>For array-like objects, the value will be casted as an Array type.</li>
-		 * <li>If an array is provided, the function will simply return the same array.</li>
-		 * <li>For a null or undefined value, the result will be an empty Array.</li>
-		 * <li>For all other values, the value will be the first element in a new Array. </li>
-		 * </ul>
-		 *
-		 * @event //utility
-		 * @param {Any} o The value to convert into an array
-		 * @returns {Array} The value as an array
-		 */
-		toArray : toArray,
-		
-		/**
-		 * Returns an array of the names of all properties of an object.
-		 * 
-		 * @event //utility
-		 * @param {Object|Array} o The object in question
-		 * @returns {Array} The names of all properties
-		 */
-		keys : keys,
-		
-		/**
-		 * Mutates the array by pushing the provided value onto the array only if it is not already there.
-		 *
-		 * @event //utility
-		 * @param {Array} arr The array to modify
-		 * @param {Any} o The object to add to the array if it is not already there
-		 * @returns {Array} The provided array for chaining
-		 */
-		pushUnique : pushUnique,
-		
-		/**
-		 * Mutates the array by removing the first item that matches the provided value in the array.
-		 *
-		 * @event //utility
-		 * @param {Array} arr The array to modify
-		 * @param {Any} o The object to remove from the array
-		 * @returns {Array} The provided array for chaining
-		 */
-		popFirst : popFirst,
-		
-		/**
-		 * Creates a copy of the target object.
-		 * <p>
-		 * This method will create a new instance of the target, and then mixin the properties of the target.
-		 * If <code>deep</code> is <code>true</code>, then each property will be cloned before mixin.
-		 * </p>
-		 * <p><b>Warning</b>: This is not a generic clone function, as it will only properly clone objects and arrays.</p>
-		 * 
-		 * @event //utility
-		 * @param {Any} o The value to clone 
-		 * @param {Boolean} [deep=false] If each property should be recursively cloned
-		 * @returns A cloned copy of the provided value
-		 */
-		clone : clone,
-		
-		/**
-		 * Generates a pseudo-random UUID.
-		 * 
-		 * @event //utility
-		 * @returns {String} A new universally unique ID
-		 */
-		randomUUID : randomUUID,
-		
-		/**
-		 * Properly escapes a URI component for embedding into a URI string.
-		 * 
-		 * @event //utility
-		 * @param {String} str The URI component to escape
-		 * @returns {String} The escaped URI component
-		 */
-		escapeURIComponent : escapeURIComponent,
-		
-		/**
-		 * Returns a URI that is formated for JSV. Currently, this only ensures that the URI ends with a hash tag (<code>#</code>).
-		 * 
-		 * @event //utility
-		 * @param {String} uri The URI to format
-		 * @returns {String} The URI formatted for JSV
-		 */
-		formatURI : formatURI,
-		
-		/**
-		 * Merges two schemas/instance together.
-		 * 
-		 * @event //utility
-		 * @param {JSONSchema|Any} base The old value to merge
-		 * @param {JSONSchema|Any} extra The new value to merge
-		 * @param {Boolean} extension If the merge is a JSON Schema extension
-		 * @return {Any} The modified base value
-		 */
-		 
-		inherits : inherits,
-		
-		/**
-		 * @private
-		 * @event //utility
-		 */
-		
-		InitializationError : InitializationError
-	};
-	
-	this.JSV = JSV;  //set global object
-	exports.JSV = JSV;  //export to CommonJS
-	
-	require("./environments");  //load default environments
-	
-}());
-},{"./environments":7,"./uri/uri":12}],12:[function(require,module,exports){
-/**
- * URI.js
- * 
- * @fileoverview An RFC 3986 compliant, scheme extendable URI parsing/validating/resolving library for JavaScript.
- * @author <a href="mailto:gary.court@gmail.com">Gary Court</a>
- * @version 1.3
- * @see http://github.com/garycourt/uri-js
- * @license URI.js v1.3 (c) 2010 Gary Court. License: http://github.com/garycourt/uri-js
- */
-
-/**
- * Copyright 2010 Gary Court. All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without modification, are
- * permitted provided that the following conditions are met:
- * 
- *    1. Redistributions of source code must retain the above copyright notice, this list of
- *       conditions and the following disclaimer.
- * 
- *    2. Redistributions in binary form must reproduce the above copyright notice, this list
- *       of conditions and the following disclaimer in the documentation and/or other materials
- *       provided with the distribution.
- * 
- * THIS SOFTWARE IS PROVIDED BY GARY COURT ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL GARY COURT OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
- * The views and conclusions contained in the software and documentation are those of the
- * authors and should not be interpreted as representing official policies, either expressed
- * or implied, of Gary Court.
- */
-
-/*jslint white: true, sub: true, onevar: true, undef: true, eqeqeq: true, newcap: true, immed: true, indent: 4 */
-/*global exports:true, require:true */
-
-if (typeof exports === "undefined") {
-	exports = {}; 
-}
-if (typeof require !== "function") {
-	require = function (id) {
-		return exports;
-	};
-}
-(function () {
-	var	
-		/**
-		 * @param {...string} sets
-		 * @return {string}
-		 */
-		mergeSet = function (sets) {
-			var set = arguments[0],
-				x = 1,
-				nextSet = arguments[x];
-			
-			while (nextSet) {
-				set = set.slice(0, -1) + nextSet.slice(1);
-				nextSet = arguments[++x];
-			}
-			
-			return set;
-		},
-		
-		/**
-		 * @param {string} str
-		 * @return {string}
-		 */
-		subexp = function (str) {
-			return "(?:" + str + ")";
-		},
-	
-		ALPHA$$ = "[A-Za-z]",
-		CR$ = "[\\x0D]",
-		DIGIT$$ = "[0-9]",
-		DQUOTE$$ = "[\\x22]",
-		HEXDIG$$ = mergeSet(DIGIT$$, "[A-Fa-f]"),  //case-insensitive
-		LF$$ = "[\\x0A]",
-		SP$$ = "[\\x20]",
-		PCT_ENCODED$ = subexp("%" + HEXDIG$$ + HEXDIG$$),
-		GEN_DELIMS$$ = "[\\:\\/\\?\\#\\[\\]\\@]",
-		SUB_DELIMS$$ = "[\\!\\$\\&\\'\\(\\)\\*\\+\\,\\;\\=]",
-		RESERVED$$ = mergeSet(GEN_DELIMS$$, SUB_DELIMS$$),
-		UNRESERVED$$ = mergeSet(ALPHA$$, DIGIT$$, "[\\-\\.\\_\\~]"),
-		SCHEME$ = subexp(ALPHA$$ + mergeSet(ALPHA$$, DIGIT$$, "[\\+\\-\\.]") + "*"),
-		USERINFO$ = subexp(subexp(PCT_ENCODED$ + "|" + mergeSet(UNRESERVED$$, SUB_DELIMS$$, "[\\:]")) + "*"),
-		DEC_OCTET$ = subexp(subexp("25[0-5]") + "|" + subexp("2[0-4]" + DIGIT$$) + "|" + subexp("1" + DIGIT$$ + DIGIT$$) + "|" + subexp("[1-9]" + DIGIT$$) + "|" + DIGIT$$),
-		IPV4ADDRESS$ = subexp(DEC_OCTET$ + "\\." + DEC_OCTET$ + "\\." + DEC_OCTET$ + "\\." + DEC_OCTET$),
-		H16$ = subexp(HEXDIG$$ + "{1,4}"),
-		LS32$ = subexp(subexp(H16$ + "\\:" + H16$) + "|" + IPV4ADDRESS$),
-		IPV6ADDRESS$ = subexp(mergeSet(UNRESERVED$$, SUB_DELIMS$$, "[\\:]") + "+"),  //FIXME
-		IPVFUTURE$ = subexp("v" + HEXDIG$$ + "+\\." + mergeSet(UNRESERVED$$, SUB_DELIMS$$, "[\\:]") + "+"),
-		IP_LITERAL$ = subexp("\\[" + subexp(IPV6ADDRESS$ + "|" + IPVFUTURE$) + "\\]"),
-		REG_NAME$ = subexp(subexp(PCT_ENCODED$ + "|" + mergeSet(UNRESERVED$$, SUB_DELIMS$$)) + "*"),
-		HOST$ = subexp(IP_LITERAL$ + "|" + IPV4ADDRESS$ + "|" + REG_NAME$),
-		PORT$ = subexp(DIGIT$$ + "*"),
-		AUTHORITY$ = subexp(subexp(USERINFO$ + "@") + "?" + HOST$ + subexp("\\:" + PORT$) + "?"),
-		PCHAR$ = subexp(PCT_ENCODED$ + "|" + mergeSet(UNRESERVED$$, SUB_DELIMS$$, "[\\:\\@]")),
-		SEGMENT$ = subexp(PCHAR$ + "*"),
-		SEGMENT_NZ$ = subexp(PCHAR$ + "+"),
-		SEGMENT_NZ_NC$ = subexp(subexp(PCT_ENCODED$ + "|" + mergeSet(UNRESERVED$$, SUB_DELIMS$$, "[\\@]")) + "+"),
-		PATH_ABEMPTY$ = subexp(subexp("\\/" + SEGMENT$) + "*"),
-		PATH_ABSOLUTE$ = subexp("\\/" + subexp(SEGMENT_NZ$ + PATH_ABEMPTY$) + "?"),  //simplified
-		PATH_NOSCHEME$ = subexp(SEGMENT_NZ_NC$ + PATH_ABEMPTY$),  //simplified
-		PATH_ROOTLESS$ = subexp(SEGMENT_NZ$ + PATH_ABEMPTY$),  //simplified
-		PATH_EMPTY$ = subexp(""),  //simplified
-		PATH$ = subexp(PATH_ABEMPTY$ + "|" + PATH_ABSOLUTE$ + "|" + PATH_NOSCHEME$ + "|" + PATH_ROOTLESS$ + "|" + PATH_EMPTY$),
-		QUERY$ = subexp(subexp(PCHAR$ + "|[\\/\\?]") + "*"),
-		FRAGMENT$ = subexp(subexp(PCHAR$ + "|[\\/\\?]") + "*"),
-		HIER_PART$ = subexp(subexp("\\/\\/" + AUTHORITY$ + PATH_ABEMPTY$) + "|" + PATH_ABSOLUTE$ + "|" + PATH_ROOTLESS$ + "|" + PATH_EMPTY$),
-		URI$ = subexp(SCHEME$ + "\\:" + HIER_PART$ + subexp("\\?" + QUERY$) + "?" + subexp("\\#" + FRAGMENT$) + "?"),
-		RELATIVE_PART$ = subexp(subexp("\\/\\/" + AUTHORITY$ + PATH_ABEMPTY$) + "|" + PATH_ABSOLUTE$ + "|" + PATH_NOSCHEME$ + "|" + PATH_EMPTY$),
-		RELATIVE_REF$ = subexp(RELATIVE_PART$ + subexp("\\?" + QUERY$) + "?" + subexp("\\#" + FRAGMENT$) + "?"),
-		URI_REFERENCE$ = subexp(URI$ + "|" + RELATIVE_REF$),
-		ABSOLUTE_URI$ = subexp(SCHEME$ + "\\:" + HIER_PART$ + subexp("\\?" + QUERY$) + "?"),
-		
-		URI_REF = new RegExp("^" + subexp("(" + URI$ + ")|(" + RELATIVE_REF$ + ")") + "$"),
-		GENERIC_REF  = new RegExp("^(" + SCHEME$ + ")\\:" + subexp(subexp("\\/\\/(" + subexp("(" + USERINFO$ + ")@") + "?(" + HOST$ + ")" + subexp("\\:(" + PORT$ + ")") + "?)") + "?(" + PATH_ABEMPTY$ + "|" + PATH_ABSOLUTE$ + "|" + PATH_ROOTLESS$ + "|" + PATH_EMPTY$ + ")") + subexp("\\?(" + QUERY$ + ")") + "?" + subexp("\\#(" + FRAGMENT$ + ")") + "?$"),
-		RELATIVE_REF = new RegExp("^(){0}" + subexp(subexp("\\/\\/(" + subexp("(" + USERINFO$ + ")@") + "?(" + HOST$ + ")" + subexp("\\:(" + PORT$ + ")") + "?)") + "?(" + PATH_ABEMPTY$ + "|" + PATH_ABSOLUTE$ + "|" + PATH_NOSCHEME$ + "|" + PATH_EMPTY$ + ")") + subexp("\\?(" + QUERY$ + ")") + "?" + subexp("\\#(" + FRAGMENT$ + ")") + "?$"),
-		ABSOLUTE_REF = new RegExp("^(" + SCHEME$ + ")\\:" + subexp(subexp("\\/\\/(" + subexp("(" + USERINFO$ + ")@") + "?(" + HOST$ + ")" + subexp("\\:(" + PORT$ + ")") + "?)") + "?(" + PATH_ABEMPTY$ + "|" + PATH_ABSOLUTE$ + "|" + PATH_ROOTLESS$ + "|" + PATH_EMPTY$ + ")") + subexp("\\?(" + QUERY$ + ")") + "?$"),
-		SAMEDOC_REF = new RegExp("^" + subexp("\\#(" + FRAGMENT$ + ")") + "?$"),
-		AUTHORITY = new RegExp("^" + subexp("(" + USERINFO$ + ")@") + "?(" + HOST$ + ")" + subexp("\\:(" + PORT$ + ")") + "?$"),
-		
-		NOT_SCHEME = new RegExp(mergeSet("[^]", ALPHA$$, DIGIT$$, "[\\+\\-\\.]"), "g"),
-		NOT_USERINFO = new RegExp(mergeSet("[^\\%\\:]", UNRESERVED$$, SUB_DELIMS$$), "g"),
-		NOT_HOST = new RegExp(mergeSet("[^\\%]", UNRESERVED$$, SUB_DELIMS$$), "g"),
-		NOT_PATH = new RegExp(mergeSet("[^\\%\\/\\:\\@]", UNRESERVED$$, SUB_DELIMS$$), "g"),
-		NOT_PATH_NOSCHEME = new RegExp(mergeSet("[^\\%\\/\\@]", UNRESERVED$$, SUB_DELIMS$$), "g"),
-		NOT_QUERY = new RegExp(mergeSet("[^\\%]", UNRESERVED$$, SUB_DELIMS$$, "[\\:\\@\\/\\?]"), "g"),
-		NOT_FRAGMENT = NOT_QUERY,
-		ESCAPE = new RegExp(mergeSet("[^]", UNRESERVED$$, SUB_DELIMS$$), "g"),
-		UNRESERVED = new RegExp(UNRESERVED$$, "g"),
-		OTHER_CHARS = new RegExp(mergeSet("[^\\%]", UNRESERVED$$, RESERVED$$), "g"),
-		PCT_ENCODEDS = new RegExp(PCT_ENCODED$ + "+", "g"),
-		URI_PARSE = /^(?:([^:\/?#]+):)?(?:\/\/((?:([^\/?#@]*)@)?([^\/?#:]*)(?:\:(\d*))?))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?/i,
-		RDS1 = /^\.\.?\//,
-		RDS2 = /^\/\.(\/|$)/,
-		RDS3 = /^\/\.\.(\/|$)/,
-		RDS4 = /^\.\.?$/,
-		RDS5 = /^\/?.*?(?=\/|$)/,
-		NO_MATCH_IS_UNDEFINED = ("").match(/(){0}/)[1] === undefined,
-		
-		/**
-		 * @param {string} chr
-		 * @return {string}
-		 */
-		pctEncChar = function (chr) {
-			var c = chr.charCodeAt(0);
- 
-			if (c < 128) {
-				return "%" + c.toString(16).toUpperCase();
-			}
-			else if ((c > 127) && (c < 2048)) {
-				return "%" + ((c >> 6) | 192).toString(16).toUpperCase() + "%" + ((c & 63) | 128).toString(16).toUpperCase();
-			}
-			else {
-				return "%" + ((c >> 12) | 224).toString(16).toUpperCase() + "%" + (((c >> 6) & 63) | 128).toString(16).toUpperCase() + "%" + ((c & 63) | 128).toString(16).toUpperCase();
-			}
-		},
-		
-		/**
-		 * @param {string} str
-		 * @return {string}
-		 */
-		pctDecUnreserved = function (str) {
-			var newStr = "", 
-				i = 0,
-				c, s;
-	 
-			while (i < str.length) {
-				c = parseInt(str.substr(i + 1, 2), 16);
-	 
-				if (c < 128) {
-					s = String.fromCharCode(c);
-					if (s.match(UNRESERVED)) {
-						newStr += s;
-					} else {
-						newStr += str.substr(i, 3);
-					}
-					i += 3;
-				}
-				else if ((c > 191) && (c < 224)) {
-					newStr += str.substr(i, 6);
-					i += 6;
-				}
-				else {
-					newStr += str.substr(i, 9);
-					i += 9;
-				}
-			}
-	 
-			return newStr;
-		},
-		
-		/**
-		 * @param {string} str
-		 * @return {string}
-		 */
-		pctDecChars = function (str) {
-			var newStr = "", 
-				i = 0,
-				c, c2, c3;
-	 
-			while (i < str.length) {
-				c = parseInt(str.substr(i + 1, 2), 16);
-	 
-				if (c < 128) {
-					newStr += String.fromCharCode(c);
-					i += 3;
-				}
-				else if ((c > 191) && (c < 224)) {
-					c2 = parseInt(str.substr(i + 4, 2), 16);
-					newStr += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
-					i += 6;
-				}
-				else {
-					c2 = parseInt(str.substr(i + 4, 2), 16);
-					c3 = parseInt(str.substr(i + 7, 2), 16);
-					newStr += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
-					i += 9;
-				}
-			}
-	 
-			return newStr;
-		},
-		
-		/**
-		 * @return {string}
-		 */
-		typeOf = function (o) {
-			return o === undefined ? "undefined" : (o === null ? "null" : Object.prototype.toString.call(o).split(" ").pop().split("]").shift().toLowerCase());
-		},
-		
-		/**
-		 * @constructor
-		 * @implements URIComponents
-		 */
-		Components = function () {
-			this.errors = [];
-		}, 
-		
-		/** @namespace */ 
-		URI = exports;
-	
-	/**
-	 * Components
-	 */
-	
-	Components.prototype = {
-		/**
-		 * @type String
-		 */
-		
-		scheme : undefined,
-		
-		/**
-		 * @type String
-		 */
-		
-		authority : undefined,
-		
-		/**
-		 * @type String
-		 */
-		
-		userinfo : undefined,
-		
-		/**
-		 * @type String
-		 */
-		
-		host : undefined,
-		
-		/**
-		 * @type number
-		 */
-		
-		port : undefined,
-		
-		/**
-		 * @type string
-		 */
-		
-		path : undefined,
-		
-		/**
-		 * @type string
-		 */
-		
-		query : undefined,
-		
-		/**
-		 * @type string
-		 */
-		
-		fragment : undefined,
-		
-		/**
-		 * @type string
-		 * @values "uri", "absolute", "relative", "same-document"
-		 */
-		
-		reference : undefined,
-		
-		/**
-		 * @type Array
-		 */
-		
-		errors : undefined
-	};
-	
-	/**
-	 * URI
-	 */
-	
-	/**
-	 * @namespace
-	 */
-	
-	URI.SCHEMES = {};
-	
-	/**
-	 * @param {string} uriString
-	 * @param {Options} [options]
-	 * @returns {URIComponents}
-	 */
-	
-	URI.parse = function (uriString, options) {
-		var matches, 
-			components = new Components(),
-			schemeHandler;
-		
-		uriString = uriString ? uriString.toString() : "";
-		options = options || {};
-		
-		if (options.reference === "suffix") {
-			uriString = (options.scheme ? options.scheme + ":" : "") + "//" + uriString;
-		}
-		
-		matches = uriString.match(URI_REF);
-		
-		if (matches) {
-			if (matches[1]) {
-				//generic URI
-				matches = uriString.match(GENERIC_REF);
-			} else {
-				//relative URI
-				matches = uriString.match(RELATIVE_REF);
-			}
-		} 
-		
-		if (!matches) {
-			if (!options.tolerant) {
-				components.errors.push("URI is not strictly valid.");
-			}
-			matches = uriString.match(URI_PARSE);
-		}
-		
-		if (matches) {
-			if (NO_MATCH_IS_UNDEFINED) {
-				//store each component
-				components.scheme = matches[1];
-				components.authority = matches[2];
-				components.userinfo = matches[3];
-				components.host = matches[4];
-				components.port = parseInt(matches[5], 10);
-				components.path = matches[6] || "";
-				components.query = matches[7];
-				components.fragment = matches[8];
-				
-				//fix port number
-				if (isNaN(components.port)) {
-					components.port = matches[5];
-				}
-			} else {  //IE FIX for improper RegExp matching
-				//store each component
-				components.scheme = matches[1] || undefined;
-				components.authority = (uriString.indexOf("//") !== -1 ? matches[2] : undefined);
-				components.userinfo = (uriString.indexOf("@") !== -1 ? matches[3] : undefined);
-				components.host = (uriString.indexOf("//") !== -1 ? matches[4] : undefined);
-				components.port = parseInt(matches[5], 10);
-				components.path = matches[6] || "";
-				components.query = (uriString.indexOf("?") !== -1 ? matches[7] : undefined);
-				components.fragment = (uriString.indexOf("#") !== -1 ? matches[8] : undefined);
-				
-				//fix port number
-				if (isNaN(components.port)) {
-					components.port = (uriString.match(/\/\/.*\:(?:\/|\?|\#|$)/) ? matches[4] : undefined);
-				}
-			}
-			
-			//determine reference type
-			if (!components.scheme && !components.authority && !components.path && !components.query) {
-				components.reference = "same-document";
-			} else if (!components.scheme) {
-				components.reference = "relative";
-			} else if (!components.fragment) {
-				components.reference = "absolute";
-			} else {
-				components.reference = "uri";
-			}
-			
-			//check for reference errors
-			if (options.reference && options.reference !== "suffix" && options.reference !== components.reference) {
-				components.errors.push("URI is not a " + options.reference + " reference.");
-			}
-			
-			//check if a handler for the scheme exists
-			schemeHandler = URI.SCHEMES[(components.scheme || options.scheme || "").toLowerCase()];
-			if (schemeHandler && schemeHandler.parse) {
-				//perform extra parsing
-				schemeHandler.parse(components, options);
-			}
-		} else {
-			components.errors.push("URI can not be parsed.");
-		}
-		
-		return components;
-	};
-	
-	/**
-	 * @private
-	 * @param {URIComponents} components
-	 * @returns {string|undefined}
-	 */
-	
-	URI._recomposeAuthority = function (components) {
-		var uriTokens = [];
-		
-		if (components.userinfo !== undefined || components.host !== undefined || typeof components.port === "number") {
-			if (components.userinfo !== undefined) {
-				uriTokens.push(components.userinfo.toString().replace(NOT_USERINFO, pctEncChar));
-				uriTokens.push("@");
-			}
-			if (components.host !== undefined) {
-				uriTokens.push(components.host.toString().toLowerCase().replace(NOT_HOST, pctEncChar));
-			}
-			if (typeof components.port === "number") {
-				uriTokens.push(":");
-				uriTokens.push(components.port.toString(10));
-			}
-		}
-		
-		return uriTokens.length ? uriTokens.join("") : undefined;
-	};
-	
-	/**
-	 * @param {string} input
-	 * @returns {string}
-	 */
-	
-	URI.removeDotSegments = function (input) {
-		var output = [], s;
-		
-		while (input.length) {
-			if (input.match(RDS1)) {
-				input = input.replace(RDS1, "");
-			} else if (input.match(RDS2)) {
-				input = input.replace(RDS2, "/");
-			} else if (input.match(RDS3)) {
-				input = input.replace(RDS3, "/");
-				output.pop();
-			} else if (input === "." || input === "..") {
-				input = "";
-			} else {
-				s = input.match(RDS5)[0];
-				input = input.slice(s.length);
-				output.push(s);
-			}
-		}
-		
-		return output.join("");
-	};
-	
-	/**
-	 * @param {URIComponents} components
-	 * @param {Options} [options]
-	 * @returns {string}
-	 */
-	
-	URI.serialize = function (components, options) {
-		var uriTokens = [], 
-			schemeHandler, 
-			s;
-		options = options || {};
-		
-		//check if a handler for the scheme exists
-		schemeHandler = URI.SCHEMES[components.scheme || options.scheme];
-		if (schemeHandler && schemeHandler.serialize) {
-			//perform extra serialization
-			schemeHandler.serialize(components, options);
-		}
-		
-		if (options.reference !== "suffix" && components.scheme) {
-			uriTokens.push(components.scheme.toString().toLowerCase().replace(NOT_SCHEME, ""));
-			uriTokens.push(":");
-		}
-		
-		components.authority = URI._recomposeAuthority(components);
-		if (components.authority !== undefined) {
-			if (options.reference !== "suffix") {
-				uriTokens.push("//");
-			}
-			
-			uriTokens.push(components.authority);
-			
-			if (components.path && components.path.charAt(0) !== "/") {
-				uriTokens.push("/");
-			}
-		}
-		
-		if (components.path) {
-			s = URI.removeDotSegments(components.path.toString().replace(/%2E/ig, "."));
-			
-			if (components.scheme) {
-				s = s.replace(NOT_PATH, pctEncChar);
-			} else {
-				s = s.replace(NOT_PATH_NOSCHEME, pctEncChar);
-			}
-			
-			if (components.authority === undefined) {
-				s = s.replace(/^\/\//, "/%2F");  //don't allow the path to start with "//"
-			}
-			uriTokens.push(s);
-		}
-		
-		if (components.query) {
-			uriTokens.push("?");
-			uriTokens.push(components.query.toString().replace(NOT_QUERY, pctEncChar));
-		}
-		
-		if (components.fragment) {
-			uriTokens.push("#");
-			uriTokens.push(components.fragment.toString().replace(NOT_FRAGMENT, pctEncChar));
-		}
-		
-		return uriTokens
-			.join('')  //merge tokens into a string
-			.replace(PCT_ENCODEDS, pctDecUnreserved)  //undecode unreserved characters
-			//.replace(OTHER_CHARS, pctEncChar)  //replace non-URI characters
-			.replace(/%[0-9A-Fa-f]{2}/g, function (str) {  //uppercase percent encoded characters
-				return str.toUpperCase();
-			})
-		;
-	};
-	
-	/**
-	 * @param {URIComponents} base
-	 * @param {URIComponents} relative
-	 * @param {Options} [options]
-	 * @param {boolean} [skipNormalization]
-	 * @returns {URIComponents}
-	 */
-	
-	URI.resolveComponents = function (base, relative, options, skipNormalization) {
-		var target = new Components();
-		
-		if (!skipNormalization) {
-			base = URI.parse(URI.serialize(base, options), options);  //normalize base components
-			relative = URI.parse(URI.serialize(relative, options), options);  //normalize relative components
-		}
-		options = options || {};
-		
-		if (!options.tolerant && relative.scheme) {
-			target.scheme = relative.scheme;
-			target.authority = relative.authority;
-			target.userinfo = relative.userinfo;
-			target.host = relative.host;
-			target.port = relative.port;
-			target.path = URI.removeDotSegments(relative.path);
-			target.query = relative.query;
-		} else {
-			if (relative.authority !== undefined) {
-				target.authority = relative.authority;
-				target.userinfo = relative.userinfo;
-				target.host = relative.host;
-				target.port = relative.port;
-				target.path = URI.removeDotSegments(relative.path);
-				target.query = relative.query;
-			} else {
-				if (!relative.path) {
-					target.path = base.path;
-					if (relative.query !== undefined) {
-						target.query = relative.query;
-					} else {
-						target.query = base.query;
-					}
-				} else {
-					if (relative.path.charAt(0) === "/") {
-						target.path = URI.removeDotSegments(relative.path);
-					} else {
-						if (base.authority !== undefined && !base.path) {
-							target.path = "/" + relative.path;
-						} else if (!base.path) {
-							target.path = relative.path;
-						} else {
-							target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative.path;
-						}
-						target.path = URI.removeDotSegments(target.path);
-					}
-					target.query = relative.query;
-				}
-				target.authority = base.authority;
-				target.userinfo = base.userinfo;
-				target.host = base.host;
-				target.port = base.port;
-			}
-			target.scheme = base.scheme;
-		}
-		
-		target.fragment = relative.fragment;
-		
-		return target;
-	};
-	
-	/**
-	 * @param {string} baseURI
-	 * @param {string} relativeURI
-	 * @param {Options} [options]
-	 * @returns {string}
-	 */
-	
-	URI.resolve = function (baseURI, relativeURI, options) {
-		return URI.serialize(URI.resolveComponents(URI.parse(baseURI, options), URI.parse(relativeURI, options), options, true), options);
-	};
-	
-	/**
-	 * @param {string|URIComponents} uri
-	 * @param {Options} options
-	 * @returns {string|URIComponents}
-	 */
-	
-	URI.normalize = function (uri, options) {
-		if (typeof uri === "string") {
-			return URI.serialize(URI.parse(uri, options), options);
-		} else if (typeOf(uri) === "object") {
-			return URI.parse(URI.serialize(uri, options), options);
-		}
-		
-		return uri;
-	};
-	
-	/**
-	 * @param {string|URIComponents} uriA
-	 * @param {string|URIComponents} uriB
-	 * @param {Options} options
-	 */
-	
-	URI.equal = function (uriA, uriB, options) {
-		if (typeof uriA === "string") {
-			uriA = URI.serialize(URI.parse(uriA, options), options);
-		} else if (typeOf(uriA) === "object") {
-			uriA = URI.serialize(uriA, options);
-		}
-		
-		if (typeof uriB === "string") {
-			uriB = URI.serialize(URI.parse(uriB, options), options);
-		} else if (typeOf(uriB) === "object") {
-			uriB = URI.serialize(uriB, options);
-		}
-		
-		return uriA === uriB;
-	};
-	
-	/**
-	 * @param {string} str
-	 * @returns {string}
-	 */
-	
-	URI.escapeComponent = function (str) {
-		return str && str.toString().replace(ESCAPE, pctEncChar);
-	};
-	
-	/**
-	 * @param {string} str
-	 * @returns {string}
-	 */
-	
-	URI.unescapeComponent = function (str) {
-		return str && str.toString().replace(PCT_ENCODEDS, pctDecChars);
-	};
-	
-	//export API
-	exports.pctEncChar = pctEncChar;
-	exports.pctDecChars = pctDecChars;
-	exports.Components = Components;
-	exports.URI = URI;
-	
-	//name-safe export API
-	exports["pctEncChar"] = pctEncChar;
-	exports["pctDecChars"] = pctDecChars;
-	exports["Components"] = Components;
-	exports["URI"] = {
-		"SCHEMES" : URI.SCHEMES,
-		"parse" : URI.parse,
-		"removeDotSegments" : URI.removeDotSegments,
-		"serialize" : URI.serialize,
-		"resolveComponents" : URI.resolveComponents,
-		"resolve" : URI.resolve,
-		"normalize" : URI.normalize,
-		"equal" : URI.equal,
-		"escapeComponent" : URI.escapeComponent,
-		"unescapeComponent" : URI.unescapeComponent
-	};
-	
-}());
-},{}],13:[function(require,module,exports){
 'use strict';
 
 // there's 3 implementations written in increasing order of efficiency
@@ -7911,7 +2191,7 @@ if ('Set' in global) {
 	module.exports = uniqNoSet;
 }
 
-},{}],14:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -13508,7 +7788,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
 
-},{}],15:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 "use strict"
 
 var next = (global.process && process.nextTick) || global.setImmediate || function (f) {
@@ -13530,7 +7810,7 @@ module.exports = function maybe (cb, promise) {
   }
 }
 
-},{}],16:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 //  Chance.js 1.0.13
 //  http://chancejs.com
 //  (c) 2013 Victor Quinn
@@ -20911,7 +15191,7 @@ module.exports = function maybe (cb, promise) {
     }
 })();
 
-},{}],17:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 const CHARTSET_RE = /(?:charset|encoding)\s{0,10}=\s{0,10}['"]? {0,10}([\w\-]{1,100})/i;
@@ -20972,1166 +15252,7 @@ function charset(obj, data, peekSize) {
   return cs;
 }
 
-},{}],18:[function(require,module,exports){
-/**
- * Module dependencies.
- */
-
-var EventEmitter = require('events').EventEmitter;
-var spawn = require('child_process').spawn;
-var path = require('path');
-var dirname = path.dirname;
-var basename = path.basename;
-var fs = require('fs');
-
-/**
- * Inherit `Command` from `EventEmitter.prototype`.
- */
-
-require('util').inherits(Command, EventEmitter);
-
-/**
- * Expose the root command.
- */
-
-exports = module.exports = new Command();
-
-/**
- * Expose `Command`.
- */
-
-exports.Command = Command;
-
-/**
- * Expose `Option`.
- */
-
-exports.Option = Option;
-
-/**
- * Initialize a new `Option` with the given `flags` and `description`.
- *
- * @param {String} flags
- * @param {String} description
- * @api public
- */
-
-function Option(flags, description) {
-  this.flags = flags;
-  this.required = ~flags.indexOf('<');
-  this.optional = ~flags.indexOf('[');
-  this.bool = !~flags.indexOf('-no-');
-  flags = flags.split(/[ ,|]+/);
-  if (flags.length > 1 && !/^[[<]/.test(flags[1])) this.short = flags.shift();
-  this.long = flags.shift();
-  this.description = description || '';
-}
-
-/**
- * Return option name.
- *
- * @return {String}
- * @api private
- */
-
-Option.prototype.name = function() {
-  return this.long
-    .replace('--', '')
-    .replace('no-', '');
-};
-
-/**
- * Return option name, in a camelcase format that can be used
- * as a object attribute key.
- *
- * @return {String}
- * @api private
- */
-
-Option.prototype.attributeName = function() {
-  return camelcase(this.name());
-};
-
-/**
- * Check if `arg` matches the short or long flag.
- *
- * @param {String} arg
- * @return {Boolean}
- * @api private
- */
-
-Option.prototype.is = function(arg) {
-  return this.short === arg || this.long === arg;
-};
-
-/**
- * Initialize a new `Command`.
- *
- * @param {String} name
- * @api public
- */
-
-function Command(name) {
-  this.commands = [];
-  this.options = [];
-  this._execs = {};
-  this._allowUnknownOption = false;
-  this._args = [];
-  this._name = name || '';
-}
-
-/**
- * Add command `name`.
- *
- * The `.action()` callback is invoked when the
- * command `name` is specified via __ARGV__,
- * and the remaining arguments are applied to the
- * function for access.
- *
- * When the `name` is "*" an un-matched command
- * will be passed as the first arg, followed by
- * the rest of __ARGV__ remaining.
- *
- * Examples:
- *
- *      program
- *        .version('0.0.1')
- *        .option('-C, --chdir <path>', 'change the working directory')
- *        .option('-c, --config <path>', 'set config path. defaults to ./deploy.conf')
- *        .option('-T, --no-tests', 'ignore test hook')
- *
- *      program
- *        .command('setup')
- *        .description('run remote setup commands')
- *        .action(function() {
- *          console.log('setup');
- *        });
- *
- *      program
- *        .command('exec <cmd>')
- *        .description('run the given remote command')
- *        .action(function(cmd) {
- *          console.log('exec "%s"', cmd);
- *        });
- *
- *      program
- *        .command('teardown <dir> [otherDirs...]')
- *        .description('run teardown commands')
- *        .action(function(dir, otherDirs) {
- *          console.log('dir "%s"', dir);
- *          if (otherDirs) {
- *            otherDirs.forEach(function (oDir) {
- *              console.log('dir "%s"', oDir);
- *            });
- *          }
- *        });
- *
- *      program
- *        .command('*')
- *        .description('deploy the given env')
- *        .action(function(env) {
- *          console.log('deploying "%s"', env);
- *        });
- *
- *      program.parse(process.argv);
-  *
- * @param {String} name
- * @param {String} [desc] for git-style sub-commands
- * @return {Command} the new command
- * @api public
- */
-
-Command.prototype.command = function(name, desc, opts) {
-  if (typeof desc === 'object' && desc !== null) {
-    opts = desc;
-    desc = null;
-  }
-  opts = opts || {};
-  var args = name.split(/ +/);
-  var cmd = new Command(args.shift());
-
-  if (desc) {
-    cmd.description(desc);
-    this.executables = true;
-    this._execs[cmd._name] = true;
-    if (opts.isDefault) this.defaultExecutable = cmd._name;
-  }
-  cmd._noHelp = !!opts.noHelp;
-  this.commands.push(cmd);
-  cmd.parseExpectedArgs(args);
-  cmd.parent = this;
-
-  if (desc) return this;
-  return cmd;
-};
-
-/**
- * Define argument syntax for the top-level command.
- *
- * @api public
- */
-
-Command.prototype.arguments = function(desc) {
-  return this.parseExpectedArgs(desc.split(/ +/));
-};
-
-/**
- * Add an implicit `help [cmd]` subcommand
- * which invokes `--help` for the given command.
- *
- * @api private
- */
-
-Command.prototype.addImplicitHelpCommand = function() {
-  this.command('help [cmd]', 'display help for [cmd]');
-};
-
-/**
- * Parse expected `args`.
- *
- * For example `["[type]"]` becomes `[{ required: false, name: 'type' }]`.
- *
- * @param {Array} args
- * @return {Command} for chaining
- * @api public
- */
-
-Command.prototype.parseExpectedArgs = function(args) {
-  if (!args.length) return;
-  var self = this;
-  args.forEach(function(arg) {
-    var argDetails = {
-      required: false,
-      name: '',
-      variadic: false
-    };
-
-    switch (arg[0]) {
-      case '<':
-        argDetails.required = true;
-        argDetails.name = arg.slice(1, -1);
-        break;
-      case '[':
-        argDetails.name = arg.slice(1, -1);
-        break;
-    }
-
-    if (argDetails.name.length > 3 && argDetails.name.slice(-3) === '...') {
-      argDetails.variadic = true;
-      argDetails.name = argDetails.name.slice(0, -3);
-    }
-    if (argDetails.name) {
-      self._args.push(argDetails);
-    }
-  });
-  return this;
-};
-
-/**
- * Register callback `fn` for the command.
- *
- * Examples:
- *
- *      program
- *        .command('help')
- *        .description('display verbose help')
- *        .action(function() {
- *           // output help here
- *        });
- *
- * @param {Function} fn
- * @return {Command} for chaining
- * @api public
- */
-
-Command.prototype.action = function(fn) {
-  var self = this;
-  var listener = function(args, unknown) {
-    // Parse any so-far unknown options
-    args = args || [];
-    unknown = unknown || [];
-
-    var parsed = self.parseOptions(unknown);
-
-    // Output help if necessary
-    outputHelpIfNecessary(self, parsed.unknown);
-
-    // If there are still any unknown options, then we simply
-    // die, unless someone asked for help, in which case we give it
-    // to them, and then we die.
-    if (parsed.unknown.length > 0) {
-      self.unknownOption(parsed.unknown[0]);
-    }
-
-    // Leftover arguments need to be pushed back. Fixes issue #56
-    if (parsed.args.length) args = parsed.args.concat(args);
-
-    self._args.forEach(function(arg, i) {
-      if (arg.required && args[i] == null) {
-        self.missingArgument(arg.name);
-      } else if (arg.variadic) {
-        if (i !== self._args.length - 1) {
-          self.variadicArgNotLast(arg.name);
-        }
-
-        args[i] = args.splice(i);
-      }
-    });
-
-    // Always append ourselves to the end of the arguments,
-    // to make sure we match the number of arguments the user
-    // expects
-    if (self._args.length) {
-      args[self._args.length] = self;
-    } else {
-      args.push(self);
-    }
-
-    fn.apply(self, args);
-  };
-  var parent = this.parent || this;
-  var name = parent === this ? '*' : this._name;
-  parent.on('command:' + name, listener);
-  if (this._alias) parent.on('command:' + this._alias, listener);
-  return this;
-};
-
-/**
- * Define option with `flags`, `description` and optional
- * coercion `fn`.
- *
- * The `flags` string should contain both the short and long flags,
- * separated by comma, a pipe or space. The following are all valid
- * all will output this way when `--help` is used.
- *
- *    "-p, --pepper"
- *    "-p|--pepper"
- *    "-p --pepper"
- *
- * Examples:
- *
- *     // simple boolean defaulting to false
- *     program.option('-p, --pepper', 'add pepper');
- *
- *     --pepper
- *     program.pepper
- *     // => Boolean
- *
- *     // simple boolean defaulting to true
- *     program.option('-C, --no-cheese', 'remove cheese');
- *
- *     program.cheese
- *     // => true
- *
- *     --no-cheese
- *     program.cheese
- *     // => false
- *
- *     // required argument
- *     program.option('-C, --chdir <path>', 'change the working directory');
- *
- *     --chdir /tmp
- *     program.chdir
- *     // => "/tmp"
- *
- *     // optional argument
- *     program.option('-c, --cheese [type]', 'add cheese [marble]');
- *
- * @param {String} flags
- * @param {String} description
- * @param {Function|*} [fn] or default
- * @param {*} [defaultValue]
- * @return {Command} for chaining
- * @api public
- */
-
-Command.prototype.option = function(flags, description, fn, defaultValue) {
-  var self = this,
-    option = new Option(flags, description),
-    oname = option.name(),
-    name = option.attributeName();
-
-  // default as 3rd arg
-  if (typeof fn !== 'function') {
-    if (fn instanceof RegExp) {
-      var regex = fn;
-      fn = function(val, def) {
-        var m = regex.exec(val);
-        return m ? m[0] : def;
-      };
-    } else {
-      defaultValue = fn;
-      fn = null;
-    }
-  }
-
-  // preassign default value only for --no-*, [optional], or <required>
-  if (!option.bool || option.optional || option.required) {
-    // when --no-* we make sure default is true
-    if (!option.bool) defaultValue = true;
-    // preassign only if we have a default
-    if (defaultValue !== undefined) {
-      self[name] = defaultValue;
-      option.defaultValue = defaultValue;
-    }
-  }
-
-  // register the option
-  this.options.push(option);
-
-  // when it's passed assign the value
-  // and conditionally invoke the callback
-  this.on('option:' + oname, function(val) {
-    // coercion
-    if (val !== null && fn) {
-      val = fn(val, self[name] === undefined ? defaultValue : self[name]);
-    }
-
-    // unassigned or bool
-    if (typeof self[name] === 'boolean' || typeof self[name] === 'undefined') {
-      // if no value, bool true, and we have a default, then use it!
-      if (val == null) {
-        self[name] = option.bool
-          ? defaultValue || true
-          : false;
-      } else {
-        self[name] = val;
-      }
-    } else if (val !== null) {
-      // reassign
-      self[name] = val;
-    }
-  });
-
-  return this;
-};
-
-/**
- * Allow unknown options on the command line.
- *
- * @param {Boolean} arg if `true` or omitted, no error will be thrown
- * for unknown options.
- * @api public
- */
-Command.prototype.allowUnknownOption = function(arg) {
-  this._allowUnknownOption = arguments.length === 0 || arg;
-  return this;
-};
-
-/**
- * Parse `argv`, settings options and invoking commands when defined.
- *
- * @param {Array} argv
- * @return {Command} for chaining
- * @api public
- */
-
-Command.prototype.parse = function(argv) {
-  // implicit help
-  if (this.executables) this.addImplicitHelpCommand();
-
-  // store raw args
-  this.rawArgs = argv;
-
-  // guess name
-  this._name = this._name || basename(argv[1], '.js');
-
-  // github-style sub-commands with no sub-command
-  if (this.executables && argv.length < 3 && !this.defaultExecutable) {
-    // this user needs help
-    argv.push('--help');
-  }
-
-  // process argv
-  var parsed = this.parseOptions(this.normalize(argv.slice(2)));
-  var args = this.args = parsed.args;
-
-  var result = this.parseArgs(this.args, parsed.unknown);
-
-  // executable sub-commands
-  var name = result.args[0];
-
-  var aliasCommand = null;
-  // check alias of sub commands
-  if (name) {
-    aliasCommand = this.commands.filter(function(command) {
-      return command.alias() === name;
-    })[0];
-  }
-
-  if (this._execs[name] && typeof this._execs[name] !== 'function') {
-    return this.executeSubCommand(argv, args, parsed.unknown);
-  } else if (aliasCommand) {
-    // is alias of a subCommand
-    args[0] = aliasCommand._name;
-    return this.executeSubCommand(argv, args, parsed.unknown);
-  } else if (this.defaultExecutable) {
-    // use the default subcommand
-    args.unshift(this.defaultExecutable);
-    return this.executeSubCommand(argv, args, parsed.unknown);
-  }
-
-  return result;
-};
-
-/**
- * Execute a sub-command executable.
- *
- * @param {Array} argv
- * @param {Array} args
- * @param {Array} unknown
- * @api private
- */
-
-Command.prototype.executeSubCommand = function(argv, args, unknown) {
-  args = args.concat(unknown);
-
-  if (!args.length) this.help();
-  if (args[0] === 'help' && args.length === 1) this.help();
-
-  // <cmd> --help
-  if (args[0] === 'help') {
-    args[0] = args[1];
-    args[1] = '--help';
-  }
-
-  // executable
-  var f = argv[1];
-  // name of the subcommand, link `pm-install`
-  var bin = basename(f, '.js') + '-' + args[0];
-
-  // In case of globally installed, get the base dir where executable
-  //  subcommand file should be located at
-  var baseDir,
-    link = fs.lstatSync(f).isSymbolicLink() ? fs.readlinkSync(f) : f;
-
-  // when symbolink is relative path
-  if (link !== f && link.charAt(0) !== '/') {
-    link = path.join(dirname(f), link);
-  }
-  baseDir = dirname(link);
-
-  // prefer local `./<bin>` to bin in the $PATH
-  var localBin = path.join(baseDir, bin);
-
-  // whether bin file is a js script with explicit `.js` extension
-  var isExplicitJS = false;
-  if (exists(localBin + '.js')) {
-    bin = localBin + '.js';
-    isExplicitJS = true;
-  } else if (exists(localBin)) {
-    bin = localBin;
-  }
-
-  args = args.slice(1);
-
-  var proc;
-  if (process.platform !== 'win32') {
-    if (isExplicitJS) {
-      args.unshift(bin);
-      // add executable arguments to spawn
-      args = (process.execArgv || []).concat(args);
-
-      proc = spawn(process.argv[0], args, { stdio: 'inherit', customFds: [0, 1, 2] });
-    } else {
-      proc = spawn(bin, args, { stdio: 'inherit', customFds: [0, 1, 2] });
-    }
-  } else {
-    args.unshift(bin);
-    proc = spawn(process.execPath, args, { stdio: 'inherit' });
-  }
-
-  var signals = ['SIGUSR1', 'SIGUSR2', 'SIGTERM', 'SIGINT', 'SIGHUP'];
-  signals.forEach(function(signal) {
-    process.on(signal, function() {
-      if (proc.killed === false && proc.exitCode === null) {
-        proc.kill(signal);
-      }
-    });
-  });
-  proc.on('close', process.exit.bind(process));
-  proc.on('error', function(err) {
-    if (err.code === 'ENOENT') {
-      console.error('\n  %s(1) does not exist, try --help\n', bin);
-    } else if (err.code === 'EACCES') {
-      console.error('\n  %s(1) not executable. try chmod or run with root\n', bin);
-    }
-    process.exit(1);
-  });
-
-  // Store the reference to the child process
-  this.runningCommand = proc;
-};
-
-/**
- * Normalize `args`, splitting joined short flags. For example
- * the arg "-abc" is equivalent to "-a -b -c".
- * This also normalizes equal sign and splits "--abc=def" into "--abc def".
- *
- * @param {Array} args
- * @return {Array}
- * @api private
- */
-
-Command.prototype.normalize = function(args) {
-  var ret = [],
-    arg,
-    lastOpt,
-    index;
-
-  for (var i = 0, len = args.length; i < len; ++i) {
-    arg = args[i];
-    if (i > 0) {
-      lastOpt = this.optionFor(args[i - 1]);
-    }
-
-    if (arg === '--') {
-      // Honor option terminator
-      ret = ret.concat(args.slice(i));
-      break;
-    } else if (lastOpt && lastOpt.required) {
-      ret.push(arg);
-    } else if (arg.length > 1 && arg[0] === '-' && arg[1] !== '-') {
-      arg.slice(1).split('').forEach(function(c) {
-        ret.push('-' + c);
-      });
-    } else if (/^--/.test(arg) && ~(index = arg.indexOf('='))) {
-      ret.push(arg.slice(0, index), arg.slice(index + 1));
-    } else {
-      ret.push(arg);
-    }
-  }
-
-  return ret;
-};
-
-/**
- * Parse command `args`.
- *
- * When listener(s) are available those
- * callbacks are invoked, otherwise the "*"
- * event is emitted and those actions are invoked.
- *
- * @param {Array} args
- * @return {Command} for chaining
- * @api private
- */
-
-Command.prototype.parseArgs = function(args, unknown) {
-  var name;
-
-  if (args.length) {
-    name = args[0];
-    if (this.listeners('command:' + name).length) {
-      this.emit('command:' + args.shift(), args, unknown);
-    } else {
-      this.emit('command:*', args);
-    }
-  } else {
-    outputHelpIfNecessary(this, unknown);
-
-    // If there were no args and we have unknown options,
-    // then they are extraneous and we need to error.
-    if (unknown.length > 0) {
-      this.unknownOption(unknown[0]);
-    }
-  }
-
-  return this;
-};
-
-/**
- * Return an option matching `arg` if any.
- *
- * @param {String} arg
- * @return {Option}
- * @api private
- */
-
-Command.prototype.optionFor = function(arg) {
-  for (var i = 0, len = this.options.length; i < len; ++i) {
-    if (this.options[i].is(arg)) {
-      return this.options[i];
-    }
-  }
-};
-
-/**
- * Parse options from `argv` returning `argv`
- * void of these options.
- *
- * @param {Array} argv
- * @return {Array}
- * @api public
- */
-
-Command.prototype.parseOptions = function(argv) {
-  var args = [],
-    len = argv.length,
-    literal,
-    option,
-    arg;
-
-  var unknownOptions = [];
-
-  // parse options
-  for (var i = 0; i < len; ++i) {
-    arg = argv[i];
-
-    // literal args after --
-    if (literal) {
-      args.push(arg);
-      continue;
-    }
-
-    if (arg === '--') {
-      literal = true;
-      continue;
-    }
-
-    // find matching Option
-    option = this.optionFor(arg);
-
-    // option is defined
-    if (option) {
-      // requires arg
-      if (option.required) {
-        arg = argv[++i];
-        if (arg == null) return this.optionMissingArgument(option);
-        this.emit('option:' + option.name(), arg);
-      // optional arg
-      } else if (option.optional) {
-        arg = argv[i + 1];
-        if (arg == null || (arg[0] === '-' && arg !== '-')) {
-          arg = null;
-        } else {
-          ++i;
-        }
-        this.emit('option:' + option.name(), arg);
-      // bool
-      } else {
-        this.emit('option:' + option.name());
-      }
-      continue;
-    }
-
-    // looks like an option
-    if (arg.length > 1 && arg[0] === '-') {
-      unknownOptions.push(arg);
-
-      // If the next argument looks like it might be
-      // an argument for this option, we pass it on.
-      // If it isn't, then it'll simply be ignored
-      if ((i + 1) < argv.length && argv[i + 1][0] !== '-') {
-        unknownOptions.push(argv[++i]);
-      }
-      continue;
-    }
-
-    // arg
-    args.push(arg);
-  }
-
-  return { args: args, unknown: unknownOptions };
-};
-
-/**
- * Return an object containing options as key-value pairs
- *
- * @return {Object}
- * @api public
- */
-Command.prototype.opts = function() {
-  var result = {},
-    len = this.options.length;
-
-  for (var i = 0; i < len; i++) {
-    var key = this.options[i].attributeName();
-    result[key] = key === this._versionOptionName ? this._version : this[key];
-  }
-  return result;
-};
-
-/**
- * Argument `name` is missing.
- *
- * @param {String} name
- * @api private
- */
-
-Command.prototype.missingArgument = function(name) {
-  console.error();
-  console.error("  error: missing required argument `%s'", name);
-  console.error();
-  process.exit(1);
-};
-
-/**
- * `Option` is missing an argument, but received `flag` or nothing.
- *
- * @param {String} option
- * @param {String} flag
- * @api private
- */
-
-Command.prototype.optionMissingArgument = function(option, flag) {
-  console.error();
-  if (flag) {
-    console.error("  error: option `%s' argument missing, got `%s'", option.flags, flag);
-  } else {
-    console.error("  error: option `%s' argument missing", option.flags);
-  }
-  console.error();
-  process.exit(1);
-};
-
-/**
- * Unknown option `flag`.
- *
- * @param {String} flag
- * @api private
- */
-
-Command.prototype.unknownOption = function(flag) {
-  if (this._allowUnknownOption) return;
-  console.error();
-  console.error("  error: unknown option `%s'", flag);
-  console.error();
-  process.exit(1);
-};
-
-/**
- * Variadic argument with `name` is not the last argument as required.
- *
- * @param {String} name
- * @api private
- */
-
-Command.prototype.variadicArgNotLast = function(name) {
-  console.error();
-  console.error("  error: variadic arguments must be last `%s'", name);
-  console.error();
-  process.exit(1);
-};
-
-/**
- * Set the program version to `str`.
- *
- * This method auto-registers the "-V, --version" flag
- * which will print the version number when passed.
- *
- * @param {String} str
- * @param {String} [flags]
- * @return {Command} for chaining
- * @api public
- */
-
-Command.prototype.version = function(str, flags) {
-  if (arguments.length === 0) return this._version;
-  this._version = str;
-  flags = flags || '-V, --version';
-  var versionOption = new Option(flags, 'output the version number');
-  this._versionOptionName = versionOption.long.substr(2) || 'version';
-  this.options.push(versionOption);
-  this.on('option:' + this._versionOptionName, function() {
-    process.stdout.write(str + '\n');
-    process.exit(0);
-  });
-  return this;
-};
-
-/**
- * Set the description to `str`.
- *
- * @param {String} str
- * @return {String|Command}
- * @api public
- */
-
-Command.prototype.description = function(str) {
-  if (arguments.length === 0) return this._description;
-  this._description = str;
-  return this;
-};
-
-/**
- * Set an alias for the command
- *
- * @param {String} alias
- * @return {String|Command}
- * @api public
- */
-
-Command.prototype.alias = function(alias) {
-  var command = this;
-  if (this.commands.length !== 0) {
-    command = this.commands[this.commands.length - 1];
-  }
-
-  if (arguments.length === 0) return command._alias;
-
-  if (alias === command._name) throw new Error('Command alias can\'t be the same as its name');
-
-  command._alias = alias;
-  return this;
-};
-
-/**
- * Set / get the command usage `str`.
- *
- * @param {String} str
- * @return {String|Command}
- * @api public
- */
-
-Command.prototype.usage = function(str) {
-  var args = this._args.map(function(arg) {
-    return humanReadableArgName(arg);
-  });
-
-  var usage = '[options]' +
-    (this.commands.length ? ' [command]' : '') +
-    (this._args.length ? ' ' + args.join(' ') : '');
-
-  if (arguments.length === 0) return this._usage || usage;
-  this._usage = str;
-
-  return this;
-};
-
-/**
- * Get or set the name of the command
- *
- * @param {String} str
- * @return {String|Command}
- * @api public
- */
-
-Command.prototype.name = function(str) {
-  if (arguments.length === 0) return this._name;
-  this._name = str;
-  return this;
-};
-
-/**
- * Return the largest option length.
- *
- * @return {Number}
- * @api private
- */
-
-Command.prototype.largestOptionLength = function() {
-  return this.options.reduce(function(max, option) {
-    return Math.max(max, option.flags.length);
-  }, 0);
-};
-
-/**
- * Return help for options.
- *
- * @return {String}
- * @api private
- */
-
-Command.prototype.optionHelp = function() {
-  var width = this.largestOptionLength();
-
-  // Append the help information
-  return this.options.map(function(option) {
-    return pad(option.flags, width) + '  ' + option.description +
-      ((option.bool && option.defaultValue !== undefined) ? ' (default: ' + option.defaultValue + ')' : '');
-  }).concat([pad('-h, --help', width) + '  ' + 'output usage information'])
-    .join('\n');
-};
-
-/**
- * Return command help documentation.
- *
- * @return {String}
- * @api private
- */
-
-Command.prototype.commandHelp = function() {
-  if (!this.commands.length) return '';
-
-  var commands = this.commands.filter(function(cmd) {
-    return !cmd._noHelp;
-  }).map(function(cmd) {
-    var args = cmd._args.map(function(arg) {
-      return humanReadableArgName(arg);
-    }).join(' ');
-
-    return [
-      cmd._name +
-        (cmd._alias ? '|' + cmd._alias : '') +
-        (cmd.options.length ? ' [options]' : '') +
-        (args ? ' ' + args : ''),
-      cmd._description
-    ];
-  });
-
-  var width = commands.reduce(function(max, command) {
-    return Math.max(max, command[0].length);
-  }, 0);
-
-  return [
-    '',
-    '  Commands:',
-    '',
-    commands.map(function(cmd) {
-      var desc = cmd[1] ? '  ' + cmd[1] : '';
-      return (desc ? pad(cmd[0], width) : cmd[0]) + desc;
-    }).join('\n').replace(/^/gm, '    '),
-    ''
-  ].join('\n');
-};
-
-/**
- * Return program help documentation.
- *
- * @return {String}
- * @api private
- */
-
-Command.prototype.helpInformation = function() {
-  var desc = [];
-  if (this._description) {
-    desc = [
-      '  ' + this._description,
-      ''
-    ];
-  }
-
-  var cmdName = this._name;
-  if (this._alias) {
-    cmdName = cmdName + '|' + this._alias;
-  }
-  var usage = [
-    '',
-    '  Usage: ' + cmdName + ' ' + this.usage(),
-    ''
-  ];
-
-  var cmds = [];
-  var commandHelp = this.commandHelp();
-  if (commandHelp) cmds = [commandHelp];
-
-  var options = [
-    '',
-    '  Options:',
-    '',
-    '' + this.optionHelp().replace(/^/gm, '    '),
-    ''
-  ];
-
-  return usage
-    .concat(desc)
-    .concat(options)
-    .concat(cmds)
-    .join('\n');
-};
-
-/**
- * Output help information for this command
- *
- * @api public
- */
-
-Command.prototype.outputHelp = function(cb) {
-  if (!cb) {
-    cb = function(passthru) {
-      return passthru;
-    };
-  }
-  process.stdout.write(cb(this.helpInformation()));
-  this.emit('--help');
-};
-
-/**
- * Output help information and exit.
- *
- * @api public
- */
-
-Command.prototype.help = function(cb) {
-  this.outputHelp(cb);
-  process.exit();
-};
-
-/**
- * Camel-case the given `flag`
- *
- * @param {String} flag
- * @return {String}
- * @api private
- */
-
-function camelcase(flag) {
-  return flag.split('-').reduce(function(str, word) {
-    return str + word[0].toUpperCase() + word.slice(1);
-  });
-}
-
-/**
- * Pad `str` to `width`.
- *
- * @param {String} str
- * @param {Number} width
- * @return {String}
- * @api private
- */
-
-function pad(str, width) {
-  var len = Math.max(0, width - str.length);
-  return str + Array(len + 1).join(' ');
-}
-
-/**
- * Output help information if necessary
- *
- * @param {Command} command to output help for
- * @param {Array} array of options to search for -h or --help
- * @api private
- */
-
-function outputHelpIfNecessary(cmd, options) {
-  options = options || [];
-  for (var i = 0; i < options.length; i++) {
-    if (options[i] === '--help' || options[i] === '-h') {
-      cmd.outputHelp();
-      process.exit(0);
-    }
-  }
-}
-
-/**
- * Takes an argument an returns its human readable equivalent for help usage.
- *
- * @param {Object} arg
- * @return {String}
- * @api private
- */
-
-function humanReadableArgName(arg) {
-  var nameOutput = arg.name + (arg.variadic === true ? '...' : '');
-
-  return arg.required
-    ? '<' + nameOutput + '>'
-    : '[' + nameOutput + ']';
-}
-
-// for versions before node v0.8 when there weren't `fs.existsSync`
-function exists(file) {
-  try {
-    if (fs.statSync(file).isFile()) {
-      return true;
-    }
-  } catch (e) {
-    return false;
-  }
-}
-
-},{"child_process":undefined,"events":undefined,"fs":undefined,"path":undefined,"util":undefined}],19:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -22240,7 +15361,7 @@ function objectToString(o) {
   return Object.prototype.toString.call(o);
 }
 
-},{}],20:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 /**
  * This is the web browser implementation of `debug()`.
  *
@@ -22437,7 +15558,7 @@ function localstorage() {
   } catch (e) {}
 }
 
-},{"./debug":21}],21:[function(require,module,exports){
+},{"./debug":14}],14:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -22664,7 +15785,7 @@ function coerce(val) {
   return val;
 }
 
-},{"ms":186}],22:[function(require,module,exports){
+},{"ms":178}],15:[function(require,module,exports){
 /**
  * Detect Electron renderer process, which is node, but we should
  * treat as a browser.
@@ -22676,7 +15797,7 @@ if (typeof process === 'undefined' || process.type === 'renderer') {
   module.exports = require('./node.js');
 }
 
-},{"./browser.js":20,"./node.js":23}],23:[function(require,module,exports){
+},{"./browser.js":13,"./node.js":16}],16:[function(require,module,exports){
 /**
  * Module dependencies.
  */
@@ -22864,7 +15985,7 @@ function init (debug) {
 
 exports.enable(load());
 
-},{"./debug":21,"supports-color":288,"tty":undefined,"util":undefined}],24:[function(require,module,exports){
+},{"./debug":14,"supports-color":276,"tty":undefined,"util":undefined}],17:[function(require,module,exports){
 /*!
  * @description Recursive object extending
  * @author Viacheslav Lotsmanov <lotsmanov89@gmail.com>
@@ -23010,7 +16131,7 @@ var deepExtend = module.exports = function (/*obj_1, [obj_2], [obj_N]*/) {
 	return target;
 }
 
-},{}],25:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 'use strict';
 
 var $ = require('./util/helpers');
@@ -23084,7 +16205,7 @@ var instance = module.exports = function(f) {
 
 instance.util = $;
 
-},{"./util/find-reference":27,"./util/helpers":28,"./util/normalize-schema":29,"./util/resolve-schema":30}],26:[function(require,module,exports){
+},{"./util/find-reference":20,"./util/helpers":21,"./util/normalize-schema":22,"./util/resolve-schema":23}],19:[function(require,module,exports){
 'use strict';
 
 var clone = module.exports = function(obj, seen) {
@@ -23119,7 +16240,7 @@ var clone = module.exports = function(obj, seen) {
   return target;
 };
 
-},{}],27:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 var $ = require('./helpers');
@@ -23175,7 +16296,7 @@ var find = module.exports = function(id, refs, filter) {
   return target;
 };
 
-},{"./helpers":28}],28:[function(require,module,exports){
+},{"./helpers":21}],21:[function(require,module,exports){
 'use strict';
 
 // https://gist.github.com/pjt33/efb2f1134bab986113fd
@@ -23284,7 +16405,7 @@ module.exports = {
   getDocumentURI: getDocumentURI
 };
 
-},{}],29:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 
 var $ = require('./helpers');
@@ -23351,7 +16472,7 @@ module.exports = function(fakeroot, schema, push) {
   return copy;
 };
 
-},{"./clone-obj":26,"./helpers":28}],30:[function(require,module,exports){
+},{"./clone-obj":19,"./helpers":21}],23:[function(require,module,exports){
 'use strict';
 
 var $ = require('./helpers');
@@ -23408,7 +16529,7 @@ module.exports = function(obj, refs, resolve, callback) {
   return copy({}, obj, refs, parent, resolve, callback);
 };
 
-},{"./find-reference":27,"./helpers":28,"deep-extend":24}],31:[function(require,module,exports){
+},{"./find-reference":20,"./helpers":21,"deep-extend":17}],24:[function(require,module,exports){
 /*
   Module dependencies
 */
@@ -23588,7 +16709,7 @@ function renderComment(elem) {
   return '<!--' + elem.data + '-->';
 }
 
-},{"domelementtype":32,"entities":47}],32:[function(require,module,exports){
+},{"domelementtype":25,"entities":40}],25:[function(require,module,exports){
 //Types of elements found in the DOM
 module.exports = {
 	Text: "text", //Text
@@ -23603,7 +16724,7 @@ module.exports = {
 		return elem.type === "tag" || elem.type === "script" || elem.type === "style";
 	}
 };
-},{}],33:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 //Types of elements found in the DOM
 module.exports = {
 	Text: "text", //Text
@@ -23620,7 +16741,7 @@ module.exports = {
 	}
 };
 
-},{}],34:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 var ElementType = require("domelementtype");
 
 var re_whitespace = /\s+/g;
@@ -23839,7 +16960,7 @@ DomHandler.prototype.onprocessinginstruction = function(name, data){
 
 module.exports = DomHandler;
 
-},{"./lib/element":35,"./lib/node":36,"domelementtype":33}],35:[function(require,module,exports){
+},{"./lib/element":28,"./lib/node":29,"domelementtype":26}],28:[function(require,module,exports){
 // DOM-Level-1-compliant structure
 var NodePrototype = require('./node');
 var ElementPrototype = module.exports = Object.create(NodePrototype);
@@ -23861,7 +16982,7 @@ Object.keys(domLvl1).forEach(function(key) {
 	});
 });
 
-},{"./node":36}],36:[function(require,module,exports){
+},{"./node":29}],29:[function(require,module,exports){
 // This object will be used as the prototype for Nodes when creating a
 // DOM-Level-1-compliant structure.
 var NodePrototype = module.exports = {
@@ -23907,7 +17028,7 @@ Object.keys(domLvl1).forEach(function(key) {
 	});
 });
 
-},{}],37:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 var DomUtils = module.exports;
 
 [
@@ -23923,7 +17044,7 @@ var DomUtils = module.exports;
 	});
 });
 
-},{"./lib/helpers":38,"./lib/legacy":39,"./lib/manipulation":40,"./lib/querying":41,"./lib/stringify":42,"./lib/traversal":43}],38:[function(require,module,exports){
+},{"./lib/helpers":31,"./lib/legacy":32,"./lib/manipulation":33,"./lib/querying":34,"./lib/stringify":35,"./lib/traversal":36}],31:[function(require,module,exports){
 // removeSubsets
 // Given an array of nodes, remove any member that is contained by another.
 exports.removeSubsets = function(nodes) {
@@ -24066,7 +17187,7 @@ exports.uniqueSort = function(nodes) {
 	return nodes;
 };
 
-},{}],39:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 var ElementType = require("domelementtype");
 var isTag = exports.isTag = ElementType.isTag;
 
@@ -24155,7 +17276,7 @@ exports.getElementsByTagType = function(type, element, recurse, limit){
 	return this.filter(Checks.tag_type(type), element, recurse, limit);
 };
 
-},{"domelementtype":33}],40:[function(require,module,exports){
+},{"domelementtype":26}],33:[function(require,module,exports){
 exports.removeElement = function(elem){
 	if(elem.prev) elem.prev.next = elem.next;
 	if(elem.next) elem.next.prev = elem.prev;
@@ -24234,7 +17355,7 @@ exports.prepend = function(elem, prev){
 
 
 
-},{}],41:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 var isTag = require("domelementtype").isTag;
 
 module.exports = {
@@ -24331,7 +17452,7 @@ function findAll(test, rootElems){
 	return result;
 }
 
-},{"domelementtype":33}],42:[function(require,module,exports){
+},{"domelementtype":26}],35:[function(require,module,exports){
 var ElementType = require("domelementtype"),
     getOuterHTML = require("dom-serializer"),
     isTag = ElementType.isTag;
@@ -24356,7 +17477,7 @@ function getText(elem){
 	return "";
 }
 
-},{"dom-serializer":31,"domelementtype":33}],43:[function(require,module,exports){
+},{"dom-serializer":24,"domelementtype":26}],36:[function(require,module,exports){
 var getChildren = exports.getChildren = function(elem){
 	return elem.children;
 };
@@ -24382,7 +17503,7 @@ exports.getName = function(elem){
 	return elem.name;
 };
 
-},{}],44:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 //protected helper class
 function _SubRange(low, high) {
     this.low = low;
@@ -24559,7 +17680,7 @@ DiscontinuousRange.prototype.clone = function () {
 
 module.exports = DiscontinuousRange;
 
-},{}],45:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 var stream = require('readable-stream')
 var eos = require('end-of-stream')
 var inherits = require('inherits')
@@ -24800,7 +17921,7 @@ Duplexify.prototype.end = function(data, enc, cb) {
 
 module.exports = Duplexify
 
-},{"end-of-stream":46,"inherits":114,"readable-stream":274,"stream-shift":286}],46:[function(require,module,exports){
+},{"end-of-stream":39,"inherits":107,"readable-stream":262,"stream-shift":274}],39:[function(require,module,exports){
 var once = require('once');
 
 var noop = function() {};
@@ -24889,7 +18010,7 @@ var eos = function(stream, opts, callback) {
 
 module.exports = eos;
 
-},{"once":189}],47:[function(require,module,exports){
+},{"once":181}],40:[function(require,module,exports){
 var encode = require("./lib/encode.js"),
     decode = require("./lib/decode.js");
 
@@ -24924,7 +18045,7 @@ exports.decodeHTMLStrict = decode.HTMLStrict;
 
 exports.escape = encode.escape;
 
-},{"./lib/decode.js":48,"./lib/encode.js":50}],48:[function(require,module,exports){
+},{"./lib/decode.js":41,"./lib/encode.js":43}],41:[function(require,module,exports){
 var entityMap = require("../maps/entities.json"),
     legacyMap = require("../maps/legacy.json"),
     xmlMap    = require("../maps/xml.json"),
@@ -24997,7 +18118,7 @@ module.exports = {
 	HTML: decodeHTML,
 	HTMLStrict: decodeHTMLStrict
 };
-},{"../maps/entities.json":52,"../maps/legacy.json":53,"../maps/xml.json":54,"./decode_codepoint.js":49}],49:[function(require,module,exports){
+},{"../maps/entities.json":45,"../maps/legacy.json":46,"../maps/xml.json":47,"./decode_codepoint.js":42}],42:[function(require,module,exports){
 var decodeMap = require("../maps/decode.json");
 
 module.exports = decodeCodePoint;
@@ -25025,7 +18146,7 @@ function decodeCodePoint(codePoint){
 	return output;
 }
 
-},{"../maps/decode.json":51}],50:[function(require,module,exports){
+},{"../maps/decode.json":44}],43:[function(require,module,exports){
 var inverseXML = getInverseObj(require("../maps/xml.json")),
     xmlReplacer = getInverseReplacer(inverseXML);
 
@@ -25100,16 +18221,16 @@ function escapeXML(data){
 
 exports.escape = escapeXML;
 
-},{"../maps/entities.json":52,"../maps/xml.json":54}],51:[function(require,module,exports){
+},{"../maps/entities.json":45,"../maps/xml.json":47}],44:[function(require,module,exports){
 module.exports={"0":65533,"128":8364,"130":8218,"131":402,"132":8222,"133":8230,"134":8224,"135":8225,"136":710,"137":8240,"138":352,"139":8249,"140":338,"142":381,"145":8216,"146":8217,"147":8220,"148":8221,"149":8226,"150":8211,"151":8212,"152":732,"153":8482,"154":353,"155":8250,"156":339,"158":382,"159":376}
-},{}],52:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 module.exports={"Aacute":"\u00C1","aacute":"\u00E1","Abreve":"\u0102","abreve":"\u0103","ac":"\u223E","acd":"\u223F","acE":"\u223E\u0333","Acirc":"\u00C2","acirc":"\u00E2","acute":"\u00B4","Acy":"\u0410","acy":"\u0430","AElig":"\u00C6","aelig":"\u00E6","af":"\u2061","Afr":"\uD835\uDD04","afr":"\uD835\uDD1E","Agrave":"\u00C0","agrave":"\u00E0","alefsym":"\u2135","aleph":"\u2135","Alpha":"\u0391","alpha":"\u03B1","Amacr":"\u0100","amacr":"\u0101","amalg":"\u2A3F","amp":"&","AMP":"&","andand":"\u2A55","And":"\u2A53","and":"\u2227","andd":"\u2A5C","andslope":"\u2A58","andv":"\u2A5A","ang":"\u2220","ange":"\u29A4","angle":"\u2220","angmsdaa":"\u29A8","angmsdab":"\u29A9","angmsdac":"\u29AA","angmsdad":"\u29AB","angmsdae":"\u29AC","angmsdaf":"\u29AD","angmsdag":"\u29AE","angmsdah":"\u29AF","angmsd":"\u2221","angrt":"\u221F","angrtvb":"\u22BE","angrtvbd":"\u299D","angsph":"\u2222","angst":"\u00C5","angzarr":"\u237C","Aogon":"\u0104","aogon":"\u0105","Aopf":"\uD835\uDD38","aopf":"\uD835\uDD52","apacir":"\u2A6F","ap":"\u2248","apE":"\u2A70","ape":"\u224A","apid":"\u224B","apos":"'","ApplyFunction":"\u2061","approx":"\u2248","approxeq":"\u224A","Aring":"\u00C5","aring":"\u00E5","Ascr":"\uD835\uDC9C","ascr":"\uD835\uDCB6","Assign":"\u2254","ast":"*","asymp":"\u2248","asympeq":"\u224D","Atilde":"\u00C3","atilde":"\u00E3","Auml":"\u00C4","auml":"\u00E4","awconint":"\u2233","awint":"\u2A11","backcong":"\u224C","backepsilon":"\u03F6","backprime":"\u2035","backsim":"\u223D","backsimeq":"\u22CD","Backslash":"\u2216","Barv":"\u2AE7","barvee":"\u22BD","barwed":"\u2305","Barwed":"\u2306","barwedge":"\u2305","bbrk":"\u23B5","bbrktbrk":"\u23B6","bcong":"\u224C","Bcy":"\u0411","bcy":"\u0431","bdquo":"\u201E","becaus":"\u2235","because":"\u2235","Because":"\u2235","bemptyv":"\u29B0","bepsi":"\u03F6","bernou":"\u212C","Bernoullis":"\u212C","Beta":"\u0392","beta":"\u03B2","beth":"\u2136","between":"\u226C","Bfr":"\uD835\uDD05","bfr":"\uD835\uDD1F","bigcap":"\u22C2","bigcirc":"\u25EF","bigcup":"\u22C3","bigodot":"\u2A00","bigoplus":"\u2A01","bigotimes":"\u2A02","bigsqcup":"\u2A06","bigstar":"\u2605","bigtriangledown":"\u25BD","bigtriangleup":"\u25B3","biguplus":"\u2A04","bigvee":"\u22C1","bigwedge":"\u22C0","bkarow":"\u290D","blacklozenge":"\u29EB","blacksquare":"\u25AA","blacktriangle":"\u25B4","blacktriangledown":"\u25BE","blacktriangleleft":"\u25C2","blacktriangleright":"\u25B8","blank":"\u2423","blk12":"\u2592","blk14":"\u2591","blk34":"\u2593","block":"\u2588","bne":"=\u20E5","bnequiv":"\u2261\u20E5","bNot":"\u2AED","bnot":"\u2310","Bopf":"\uD835\uDD39","bopf":"\uD835\uDD53","bot":"\u22A5","bottom":"\u22A5","bowtie":"\u22C8","boxbox":"\u29C9","boxdl":"\u2510","boxdL":"\u2555","boxDl":"\u2556","boxDL":"\u2557","boxdr":"\u250C","boxdR":"\u2552","boxDr":"\u2553","boxDR":"\u2554","boxh":"\u2500","boxH":"\u2550","boxhd":"\u252C","boxHd":"\u2564","boxhD":"\u2565","boxHD":"\u2566","boxhu":"\u2534","boxHu":"\u2567","boxhU":"\u2568","boxHU":"\u2569","boxminus":"\u229F","boxplus":"\u229E","boxtimes":"\u22A0","boxul":"\u2518","boxuL":"\u255B","boxUl":"\u255C","boxUL":"\u255D","boxur":"\u2514","boxuR":"\u2558","boxUr":"\u2559","boxUR":"\u255A","boxv":"\u2502","boxV":"\u2551","boxvh":"\u253C","boxvH":"\u256A","boxVh":"\u256B","boxVH":"\u256C","boxvl":"\u2524","boxvL":"\u2561","boxVl":"\u2562","boxVL":"\u2563","boxvr":"\u251C","boxvR":"\u255E","boxVr":"\u255F","boxVR":"\u2560","bprime":"\u2035","breve":"\u02D8","Breve":"\u02D8","brvbar":"\u00A6","bscr":"\uD835\uDCB7","Bscr":"\u212C","bsemi":"\u204F","bsim":"\u223D","bsime":"\u22CD","bsolb":"\u29C5","bsol":"\\","bsolhsub":"\u27C8","bull":"\u2022","bullet":"\u2022","bump":"\u224E","bumpE":"\u2AAE","bumpe":"\u224F","Bumpeq":"\u224E","bumpeq":"\u224F","Cacute":"\u0106","cacute":"\u0107","capand":"\u2A44","capbrcup":"\u2A49","capcap":"\u2A4B","cap":"\u2229","Cap":"\u22D2","capcup":"\u2A47","capdot":"\u2A40","CapitalDifferentialD":"\u2145","caps":"\u2229\uFE00","caret":"\u2041","caron":"\u02C7","Cayleys":"\u212D","ccaps":"\u2A4D","Ccaron":"\u010C","ccaron":"\u010D","Ccedil":"\u00C7","ccedil":"\u00E7","Ccirc":"\u0108","ccirc":"\u0109","Cconint":"\u2230","ccups":"\u2A4C","ccupssm":"\u2A50","Cdot":"\u010A","cdot":"\u010B","cedil":"\u00B8","Cedilla":"\u00B8","cemptyv":"\u29B2","cent":"\u00A2","centerdot":"\u00B7","CenterDot":"\u00B7","cfr":"\uD835\uDD20","Cfr":"\u212D","CHcy":"\u0427","chcy":"\u0447","check":"\u2713","checkmark":"\u2713","Chi":"\u03A7","chi":"\u03C7","circ":"\u02C6","circeq":"\u2257","circlearrowleft":"\u21BA","circlearrowright":"\u21BB","circledast":"\u229B","circledcirc":"\u229A","circleddash":"\u229D","CircleDot":"\u2299","circledR":"\u00AE","circledS":"\u24C8","CircleMinus":"\u2296","CirclePlus":"\u2295","CircleTimes":"\u2297","cir":"\u25CB","cirE":"\u29C3","cire":"\u2257","cirfnint":"\u2A10","cirmid":"\u2AEF","cirscir":"\u29C2","ClockwiseContourIntegral":"\u2232","CloseCurlyDoubleQuote":"\u201D","CloseCurlyQuote":"\u2019","clubs":"\u2663","clubsuit":"\u2663","colon":":","Colon":"\u2237","Colone":"\u2A74","colone":"\u2254","coloneq":"\u2254","comma":",","commat":"@","comp":"\u2201","compfn":"\u2218","complement":"\u2201","complexes":"\u2102","cong":"\u2245","congdot":"\u2A6D","Congruent":"\u2261","conint":"\u222E","Conint":"\u222F","ContourIntegral":"\u222E","copf":"\uD835\uDD54","Copf":"\u2102","coprod":"\u2210","Coproduct":"\u2210","copy":"\u00A9","COPY":"\u00A9","copysr":"\u2117","CounterClockwiseContourIntegral":"\u2233","crarr":"\u21B5","cross":"\u2717","Cross":"\u2A2F","Cscr":"\uD835\uDC9E","cscr":"\uD835\uDCB8","csub":"\u2ACF","csube":"\u2AD1","csup":"\u2AD0","csupe":"\u2AD2","ctdot":"\u22EF","cudarrl":"\u2938","cudarrr":"\u2935","cuepr":"\u22DE","cuesc":"\u22DF","cularr":"\u21B6","cularrp":"\u293D","cupbrcap":"\u2A48","cupcap":"\u2A46","CupCap":"\u224D","cup":"\u222A","Cup":"\u22D3","cupcup":"\u2A4A","cupdot":"\u228D","cupor":"\u2A45","cups":"\u222A\uFE00","curarr":"\u21B7","curarrm":"\u293C","curlyeqprec":"\u22DE","curlyeqsucc":"\u22DF","curlyvee":"\u22CE","curlywedge":"\u22CF","curren":"\u00A4","curvearrowleft":"\u21B6","curvearrowright":"\u21B7","cuvee":"\u22CE","cuwed":"\u22CF","cwconint":"\u2232","cwint":"\u2231","cylcty":"\u232D","dagger":"\u2020","Dagger":"\u2021","daleth":"\u2138","darr":"\u2193","Darr":"\u21A1","dArr":"\u21D3","dash":"\u2010","Dashv":"\u2AE4","dashv":"\u22A3","dbkarow":"\u290F","dblac":"\u02DD","Dcaron":"\u010E","dcaron":"\u010F","Dcy":"\u0414","dcy":"\u0434","ddagger":"\u2021","ddarr":"\u21CA","DD":"\u2145","dd":"\u2146","DDotrahd":"\u2911","ddotseq":"\u2A77","deg":"\u00B0","Del":"\u2207","Delta":"\u0394","delta":"\u03B4","demptyv":"\u29B1","dfisht":"\u297F","Dfr":"\uD835\uDD07","dfr":"\uD835\uDD21","dHar":"\u2965","dharl":"\u21C3","dharr":"\u21C2","DiacriticalAcute":"\u00B4","DiacriticalDot":"\u02D9","DiacriticalDoubleAcute":"\u02DD","DiacriticalGrave":"`","DiacriticalTilde":"\u02DC","diam":"\u22C4","diamond":"\u22C4","Diamond":"\u22C4","diamondsuit":"\u2666","diams":"\u2666","die":"\u00A8","DifferentialD":"\u2146","digamma":"\u03DD","disin":"\u22F2","div":"\u00F7","divide":"\u00F7","divideontimes":"\u22C7","divonx":"\u22C7","DJcy":"\u0402","djcy":"\u0452","dlcorn":"\u231E","dlcrop":"\u230D","dollar":"$","Dopf":"\uD835\uDD3B","dopf":"\uD835\uDD55","Dot":"\u00A8","dot":"\u02D9","DotDot":"\u20DC","doteq":"\u2250","doteqdot":"\u2251","DotEqual":"\u2250","dotminus":"\u2238","dotplus":"\u2214","dotsquare":"\u22A1","doublebarwedge":"\u2306","DoubleContourIntegral":"\u222F","DoubleDot":"\u00A8","DoubleDownArrow":"\u21D3","DoubleLeftArrow":"\u21D0","DoubleLeftRightArrow":"\u21D4","DoubleLeftTee":"\u2AE4","DoubleLongLeftArrow":"\u27F8","DoubleLongLeftRightArrow":"\u27FA","DoubleLongRightArrow":"\u27F9","DoubleRightArrow":"\u21D2","DoubleRightTee":"\u22A8","DoubleUpArrow":"\u21D1","DoubleUpDownArrow":"\u21D5","DoubleVerticalBar":"\u2225","DownArrowBar":"\u2913","downarrow":"\u2193","DownArrow":"\u2193","Downarrow":"\u21D3","DownArrowUpArrow":"\u21F5","DownBreve":"\u0311","downdownarrows":"\u21CA","downharpoonleft":"\u21C3","downharpoonright":"\u21C2","DownLeftRightVector":"\u2950","DownLeftTeeVector":"\u295E","DownLeftVectorBar":"\u2956","DownLeftVector":"\u21BD","DownRightTeeVector":"\u295F","DownRightVectorBar":"\u2957","DownRightVector":"\u21C1","DownTeeArrow":"\u21A7","DownTee":"\u22A4","drbkarow":"\u2910","drcorn":"\u231F","drcrop":"\u230C","Dscr":"\uD835\uDC9F","dscr":"\uD835\uDCB9","DScy":"\u0405","dscy":"\u0455","dsol":"\u29F6","Dstrok":"\u0110","dstrok":"\u0111","dtdot":"\u22F1","dtri":"\u25BF","dtrif":"\u25BE","duarr":"\u21F5","duhar":"\u296F","dwangle":"\u29A6","DZcy":"\u040F","dzcy":"\u045F","dzigrarr":"\u27FF","Eacute":"\u00C9","eacute":"\u00E9","easter":"\u2A6E","Ecaron":"\u011A","ecaron":"\u011B","Ecirc":"\u00CA","ecirc":"\u00EA","ecir":"\u2256","ecolon":"\u2255","Ecy":"\u042D","ecy":"\u044D","eDDot":"\u2A77","Edot":"\u0116","edot":"\u0117","eDot":"\u2251","ee":"\u2147","efDot":"\u2252","Efr":"\uD835\uDD08","efr":"\uD835\uDD22","eg":"\u2A9A","Egrave":"\u00C8","egrave":"\u00E8","egs":"\u2A96","egsdot":"\u2A98","el":"\u2A99","Element":"\u2208","elinters":"\u23E7","ell":"\u2113","els":"\u2A95","elsdot":"\u2A97","Emacr":"\u0112","emacr":"\u0113","empty":"\u2205","emptyset":"\u2205","EmptySmallSquare":"\u25FB","emptyv":"\u2205","EmptyVerySmallSquare":"\u25AB","emsp13":"\u2004","emsp14":"\u2005","emsp":"\u2003","ENG":"\u014A","eng":"\u014B","ensp":"\u2002","Eogon":"\u0118","eogon":"\u0119","Eopf":"\uD835\uDD3C","eopf":"\uD835\uDD56","epar":"\u22D5","eparsl":"\u29E3","eplus":"\u2A71","epsi":"\u03B5","Epsilon":"\u0395","epsilon":"\u03B5","epsiv":"\u03F5","eqcirc":"\u2256","eqcolon":"\u2255","eqsim":"\u2242","eqslantgtr":"\u2A96","eqslantless":"\u2A95","Equal":"\u2A75","equals":"=","EqualTilde":"\u2242","equest":"\u225F","Equilibrium":"\u21CC","equiv":"\u2261","equivDD":"\u2A78","eqvparsl":"\u29E5","erarr":"\u2971","erDot":"\u2253","escr":"\u212F","Escr":"\u2130","esdot":"\u2250","Esim":"\u2A73","esim":"\u2242","Eta":"\u0397","eta":"\u03B7","ETH":"\u00D0","eth":"\u00F0","Euml":"\u00CB","euml":"\u00EB","euro":"\u20AC","excl":"!","exist":"\u2203","Exists":"\u2203","expectation":"\u2130","exponentiale":"\u2147","ExponentialE":"\u2147","fallingdotseq":"\u2252","Fcy":"\u0424","fcy":"\u0444","female":"\u2640","ffilig":"\uFB03","fflig":"\uFB00","ffllig":"\uFB04","Ffr":"\uD835\uDD09","ffr":"\uD835\uDD23","filig":"\uFB01","FilledSmallSquare":"\u25FC","FilledVerySmallSquare":"\u25AA","fjlig":"fj","flat":"\u266D","fllig":"\uFB02","fltns":"\u25B1","fnof":"\u0192","Fopf":"\uD835\uDD3D","fopf":"\uD835\uDD57","forall":"\u2200","ForAll":"\u2200","fork":"\u22D4","forkv":"\u2AD9","Fouriertrf":"\u2131","fpartint":"\u2A0D","frac12":"\u00BD","frac13":"\u2153","frac14":"\u00BC","frac15":"\u2155","frac16":"\u2159","frac18":"\u215B","frac23":"\u2154","frac25":"\u2156","frac34":"\u00BE","frac35":"\u2157","frac38":"\u215C","frac45":"\u2158","frac56":"\u215A","frac58":"\u215D","frac78":"\u215E","frasl":"\u2044","frown":"\u2322","fscr":"\uD835\uDCBB","Fscr":"\u2131","gacute":"\u01F5","Gamma":"\u0393","gamma":"\u03B3","Gammad":"\u03DC","gammad":"\u03DD","gap":"\u2A86","Gbreve":"\u011E","gbreve":"\u011F","Gcedil":"\u0122","Gcirc":"\u011C","gcirc":"\u011D","Gcy":"\u0413","gcy":"\u0433","Gdot":"\u0120","gdot":"\u0121","ge":"\u2265","gE":"\u2267","gEl":"\u2A8C","gel":"\u22DB","geq":"\u2265","geqq":"\u2267","geqslant":"\u2A7E","gescc":"\u2AA9","ges":"\u2A7E","gesdot":"\u2A80","gesdoto":"\u2A82","gesdotol":"\u2A84","gesl":"\u22DB\uFE00","gesles":"\u2A94","Gfr":"\uD835\uDD0A","gfr":"\uD835\uDD24","gg":"\u226B","Gg":"\u22D9","ggg":"\u22D9","gimel":"\u2137","GJcy":"\u0403","gjcy":"\u0453","gla":"\u2AA5","gl":"\u2277","glE":"\u2A92","glj":"\u2AA4","gnap":"\u2A8A","gnapprox":"\u2A8A","gne":"\u2A88","gnE":"\u2269","gneq":"\u2A88","gneqq":"\u2269","gnsim":"\u22E7","Gopf":"\uD835\uDD3E","gopf":"\uD835\uDD58","grave":"`","GreaterEqual":"\u2265","GreaterEqualLess":"\u22DB","GreaterFullEqual":"\u2267","GreaterGreater":"\u2AA2","GreaterLess":"\u2277","GreaterSlantEqual":"\u2A7E","GreaterTilde":"\u2273","Gscr":"\uD835\uDCA2","gscr":"\u210A","gsim":"\u2273","gsime":"\u2A8E","gsiml":"\u2A90","gtcc":"\u2AA7","gtcir":"\u2A7A","gt":">","GT":">","Gt":"\u226B","gtdot":"\u22D7","gtlPar":"\u2995","gtquest":"\u2A7C","gtrapprox":"\u2A86","gtrarr":"\u2978","gtrdot":"\u22D7","gtreqless":"\u22DB","gtreqqless":"\u2A8C","gtrless":"\u2277","gtrsim":"\u2273","gvertneqq":"\u2269\uFE00","gvnE":"\u2269\uFE00","Hacek":"\u02C7","hairsp":"\u200A","half":"\u00BD","hamilt":"\u210B","HARDcy":"\u042A","hardcy":"\u044A","harrcir":"\u2948","harr":"\u2194","hArr":"\u21D4","harrw":"\u21AD","Hat":"^","hbar":"\u210F","Hcirc":"\u0124","hcirc":"\u0125","hearts":"\u2665","heartsuit":"\u2665","hellip":"\u2026","hercon":"\u22B9","hfr":"\uD835\uDD25","Hfr":"\u210C","HilbertSpace":"\u210B","hksearow":"\u2925","hkswarow":"\u2926","hoarr":"\u21FF","homtht":"\u223B","hookleftarrow":"\u21A9","hookrightarrow":"\u21AA","hopf":"\uD835\uDD59","Hopf":"\u210D","horbar":"\u2015","HorizontalLine":"\u2500","hscr":"\uD835\uDCBD","Hscr":"\u210B","hslash":"\u210F","Hstrok":"\u0126","hstrok":"\u0127","HumpDownHump":"\u224E","HumpEqual":"\u224F","hybull":"\u2043","hyphen":"\u2010","Iacute":"\u00CD","iacute":"\u00ED","ic":"\u2063","Icirc":"\u00CE","icirc":"\u00EE","Icy":"\u0418","icy":"\u0438","Idot":"\u0130","IEcy":"\u0415","iecy":"\u0435","iexcl":"\u00A1","iff":"\u21D4","ifr":"\uD835\uDD26","Ifr":"\u2111","Igrave":"\u00CC","igrave":"\u00EC","ii":"\u2148","iiiint":"\u2A0C","iiint":"\u222D","iinfin":"\u29DC","iiota":"\u2129","IJlig":"\u0132","ijlig":"\u0133","Imacr":"\u012A","imacr":"\u012B","image":"\u2111","ImaginaryI":"\u2148","imagline":"\u2110","imagpart":"\u2111","imath":"\u0131","Im":"\u2111","imof":"\u22B7","imped":"\u01B5","Implies":"\u21D2","incare":"\u2105","in":"\u2208","infin":"\u221E","infintie":"\u29DD","inodot":"\u0131","intcal":"\u22BA","int":"\u222B","Int":"\u222C","integers":"\u2124","Integral":"\u222B","intercal":"\u22BA","Intersection":"\u22C2","intlarhk":"\u2A17","intprod":"\u2A3C","InvisibleComma":"\u2063","InvisibleTimes":"\u2062","IOcy":"\u0401","iocy":"\u0451","Iogon":"\u012E","iogon":"\u012F","Iopf":"\uD835\uDD40","iopf":"\uD835\uDD5A","Iota":"\u0399","iota":"\u03B9","iprod":"\u2A3C","iquest":"\u00BF","iscr":"\uD835\uDCBE","Iscr":"\u2110","isin":"\u2208","isindot":"\u22F5","isinE":"\u22F9","isins":"\u22F4","isinsv":"\u22F3","isinv":"\u2208","it":"\u2062","Itilde":"\u0128","itilde":"\u0129","Iukcy":"\u0406","iukcy":"\u0456","Iuml":"\u00CF","iuml":"\u00EF","Jcirc":"\u0134","jcirc":"\u0135","Jcy":"\u0419","jcy":"\u0439","Jfr":"\uD835\uDD0D","jfr":"\uD835\uDD27","jmath":"\u0237","Jopf":"\uD835\uDD41","jopf":"\uD835\uDD5B","Jscr":"\uD835\uDCA5","jscr":"\uD835\uDCBF","Jsercy":"\u0408","jsercy":"\u0458","Jukcy":"\u0404","jukcy":"\u0454","Kappa":"\u039A","kappa":"\u03BA","kappav":"\u03F0","Kcedil":"\u0136","kcedil":"\u0137","Kcy":"\u041A","kcy":"\u043A","Kfr":"\uD835\uDD0E","kfr":"\uD835\uDD28","kgreen":"\u0138","KHcy":"\u0425","khcy":"\u0445","KJcy":"\u040C","kjcy":"\u045C","Kopf":"\uD835\uDD42","kopf":"\uD835\uDD5C","Kscr":"\uD835\uDCA6","kscr":"\uD835\uDCC0","lAarr":"\u21DA","Lacute":"\u0139","lacute":"\u013A","laemptyv":"\u29B4","lagran":"\u2112","Lambda":"\u039B","lambda":"\u03BB","lang":"\u27E8","Lang":"\u27EA","langd":"\u2991","langle":"\u27E8","lap":"\u2A85","Laplacetrf":"\u2112","laquo":"\u00AB","larrb":"\u21E4","larrbfs":"\u291F","larr":"\u2190","Larr":"\u219E","lArr":"\u21D0","larrfs":"\u291D","larrhk":"\u21A9","larrlp":"\u21AB","larrpl":"\u2939","larrsim":"\u2973","larrtl":"\u21A2","latail":"\u2919","lAtail":"\u291B","lat":"\u2AAB","late":"\u2AAD","lates":"\u2AAD\uFE00","lbarr":"\u290C","lBarr":"\u290E","lbbrk":"\u2772","lbrace":"{","lbrack":"[","lbrke":"\u298B","lbrksld":"\u298F","lbrkslu":"\u298D","Lcaron":"\u013D","lcaron":"\u013E","Lcedil":"\u013B","lcedil":"\u013C","lceil":"\u2308","lcub":"{","Lcy":"\u041B","lcy":"\u043B","ldca":"\u2936","ldquo":"\u201C","ldquor":"\u201E","ldrdhar":"\u2967","ldrushar":"\u294B","ldsh":"\u21B2","le":"\u2264","lE":"\u2266","LeftAngleBracket":"\u27E8","LeftArrowBar":"\u21E4","leftarrow":"\u2190","LeftArrow":"\u2190","Leftarrow":"\u21D0","LeftArrowRightArrow":"\u21C6","leftarrowtail":"\u21A2","LeftCeiling":"\u2308","LeftDoubleBracket":"\u27E6","LeftDownTeeVector":"\u2961","LeftDownVectorBar":"\u2959","LeftDownVector":"\u21C3","LeftFloor":"\u230A","leftharpoondown":"\u21BD","leftharpoonup":"\u21BC","leftleftarrows":"\u21C7","leftrightarrow":"\u2194","LeftRightArrow":"\u2194","Leftrightarrow":"\u21D4","leftrightarrows":"\u21C6","leftrightharpoons":"\u21CB","leftrightsquigarrow":"\u21AD","LeftRightVector":"\u294E","LeftTeeArrow":"\u21A4","LeftTee":"\u22A3","LeftTeeVector":"\u295A","leftthreetimes":"\u22CB","LeftTriangleBar":"\u29CF","LeftTriangle":"\u22B2","LeftTriangleEqual":"\u22B4","LeftUpDownVector":"\u2951","LeftUpTeeVector":"\u2960","LeftUpVectorBar":"\u2958","LeftUpVector":"\u21BF","LeftVectorBar":"\u2952","LeftVector":"\u21BC","lEg":"\u2A8B","leg":"\u22DA","leq":"\u2264","leqq":"\u2266","leqslant":"\u2A7D","lescc":"\u2AA8","les":"\u2A7D","lesdot":"\u2A7F","lesdoto":"\u2A81","lesdotor":"\u2A83","lesg":"\u22DA\uFE00","lesges":"\u2A93","lessapprox":"\u2A85","lessdot":"\u22D6","lesseqgtr":"\u22DA","lesseqqgtr":"\u2A8B","LessEqualGreater":"\u22DA","LessFullEqual":"\u2266","LessGreater":"\u2276","lessgtr":"\u2276","LessLess":"\u2AA1","lesssim":"\u2272","LessSlantEqual":"\u2A7D","LessTilde":"\u2272","lfisht":"\u297C","lfloor":"\u230A","Lfr":"\uD835\uDD0F","lfr":"\uD835\uDD29","lg":"\u2276","lgE":"\u2A91","lHar":"\u2962","lhard":"\u21BD","lharu":"\u21BC","lharul":"\u296A","lhblk":"\u2584","LJcy":"\u0409","ljcy":"\u0459","llarr":"\u21C7","ll":"\u226A","Ll":"\u22D8","llcorner":"\u231E","Lleftarrow":"\u21DA","llhard":"\u296B","lltri":"\u25FA","Lmidot":"\u013F","lmidot":"\u0140","lmoustache":"\u23B0","lmoust":"\u23B0","lnap":"\u2A89","lnapprox":"\u2A89","lne":"\u2A87","lnE":"\u2268","lneq":"\u2A87","lneqq":"\u2268","lnsim":"\u22E6","loang":"\u27EC","loarr":"\u21FD","lobrk":"\u27E6","longleftarrow":"\u27F5","LongLeftArrow":"\u27F5","Longleftarrow":"\u27F8","longleftrightarrow":"\u27F7","LongLeftRightArrow":"\u27F7","Longleftrightarrow":"\u27FA","longmapsto":"\u27FC","longrightarrow":"\u27F6","LongRightArrow":"\u27F6","Longrightarrow":"\u27F9","looparrowleft":"\u21AB","looparrowright":"\u21AC","lopar":"\u2985","Lopf":"\uD835\uDD43","lopf":"\uD835\uDD5D","loplus":"\u2A2D","lotimes":"\u2A34","lowast":"\u2217","lowbar":"_","LowerLeftArrow":"\u2199","LowerRightArrow":"\u2198","loz":"\u25CA","lozenge":"\u25CA","lozf":"\u29EB","lpar":"(","lparlt":"\u2993","lrarr":"\u21C6","lrcorner":"\u231F","lrhar":"\u21CB","lrhard":"\u296D","lrm":"\u200E","lrtri":"\u22BF","lsaquo":"\u2039","lscr":"\uD835\uDCC1","Lscr":"\u2112","lsh":"\u21B0","Lsh":"\u21B0","lsim":"\u2272","lsime":"\u2A8D","lsimg":"\u2A8F","lsqb":"[","lsquo":"\u2018","lsquor":"\u201A","Lstrok":"\u0141","lstrok":"\u0142","ltcc":"\u2AA6","ltcir":"\u2A79","lt":"<","LT":"<","Lt":"\u226A","ltdot":"\u22D6","lthree":"\u22CB","ltimes":"\u22C9","ltlarr":"\u2976","ltquest":"\u2A7B","ltri":"\u25C3","ltrie":"\u22B4","ltrif":"\u25C2","ltrPar":"\u2996","lurdshar":"\u294A","luruhar":"\u2966","lvertneqq":"\u2268\uFE00","lvnE":"\u2268\uFE00","macr":"\u00AF","male":"\u2642","malt":"\u2720","maltese":"\u2720","Map":"\u2905","map":"\u21A6","mapsto":"\u21A6","mapstodown":"\u21A7","mapstoleft":"\u21A4","mapstoup":"\u21A5","marker":"\u25AE","mcomma":"\u2A29","Mcy":"\u041C","mcy":"\u043C","mdash":"\u2014","mDDot":"\u223A","measuredangle":"\u2221","MediumSpace":"\u205F","Mellintrf":"\u2133","Mfr":"\uD835\uDD10","mfr":"\uD835\uDD2A","mho":"\u2127","micro":"\u00B5","midast":"*","midcir":"\u2AF0","mid":"\u2223","middot":"\u00B7","minusb":"\u229F","minus":"\u2212","minusd":"\u2238","minusdu":"\u2A2A","MinusPlus":"\u2213","mlcp":"\u2ADB","mldr":"\u2026","mnplus":"\u2213","models":"\u22A7","Mopf":"\uD835\uDD44","mopf":"\uD835\uDD5E","mp":"\u2213","mscr":"\uD835\uDCC2","Mscr":"\u2133","mstpos":"\u223E","Mu":"\u039C","mu":"\u03BC","multimap":"\u22B8","mumap":"\u22B8","nabla":"\u2207","Nacute":"\u0143","nacute":"\u0144","nang":"\u2220\u20D2","nap":"\u2249","napE":"\u2A70\u0338","napid":"\u224B\u0338","napos":"\u0149","napprox":"\u2249","natural":"\u266E","naturals":"\u2115","natur":"\u266E","nbsp":"\u00A0","nbump":"\u224E\u0338","nbumpe":"\u224F\u0338","ncap":"\u2A43","Ncaron":"\u0147","ncaron":"\u0148","Ncedil":"\u0145","ncedil":"\u0146","ncong":"\u2247","ncongdot":"\u2A6D\u0338","ncup":"\u2A42","Ncy":"\u041D","ncy":"\u043D","ndash":"\u2013","nearhk":"\u2924","nearr":"\u2197","neArr":"\u21D7","nearrow":"\u2197","ne":"\u2260","nedot":"\u2250\u0338","NegativeMediumSpace":"\u200B","NegativeThickSpace":"\u200B","NegativeThinSpace":"\u200B","NegativeVeryThinSpace":"\u200B","nequiv":"\u2262","nesear":"\u2928","nesim":"\u2242\u0338","NestedGreaterGreater":"\u226B","NestedLessLess":"\u226A","NewLine":"\n","nexist":"\u2204","nexists":"\u2204","Nfr":"\uD835\uDD11","nfr":"\uD835\uDD2B","ngE":"\u2267\u0338","nge":"\u2271","ngeq":"\u2271","ngeqq":"\u2267\u0338","ngeqslant":"\u2A7E\u0338","nges":"\u2A7E\u0338","nGg":"\u22D9\u0338","ngsim":"\u2275","nGt":"\u226B\u20D2","ngt":"\u226F","ngtr":"\u226F","nGtv":"\u226B\u0338","nharr":"\u21AE","nhArr":"\u21CE","nhpar":"\u2AF2","ni":"\u220B","nis":"\u22FC","nisd":"\u22FA","niv":"\u220B","NJcy":"\u040A","njcy":"\u045A","nlarr":"\u219A","nlArr":"\u21CD","nldr":"\u2025","nlE":"\u2266\u0338","nle":"\u2270","nleftarrow":"\u219A","nLeftarrow":"\u21CD","nleftrightarrow":"\u21AE","nLeftrightarrow":"\u21CE","nleq":"\u2270","nleqq":"\u2266\u0338","nleqslant":"\u2A7D\u0338","nles":"\u2A7D\u0338","nless":"\u226E","nLl":"\u22D8\u0338","nlsim":"\u2274","nLt":"\u226A\u20D2","nlt":"\u226E","nltri":"\u22EA","nltrie":"\u22EC","nLtv":"\u226A\u0338","nmid":"\u2224","NoBreak":"\u2060","NonBreakingSpace":"\u00A0","nopf":"\uD835\uDD5F","Nopf":"\u2115","Not":"\u2AEC","not":"\u00AC","NotCongruent":"\u2262","NotCupCap":"\u226D","NotDoubleVerticalBar":"\u2226","NotElement":"\u2209","NotEqual":"\u2260","NotEqualTilde":"\u2242\u0338","NotExists":"\u2204","NotGreater":"\u226F","NotGreaterEqual":"\u2271","NotGreaterFullEqual":"\u2267\u0338","NotGreaterGreater":"\u226B\u0338","NotGreaterLess":"\u2279","NotGreaterSlantEqual":"\u2A7E\u0338","NotGreaterTilde":"\u2275","NotHumpDownHump":"\u224E\u0338","NotHumpEqual":"\u224F\u0338","notin":"\u2209","notindot":"\u22F5\u0338","notinE":"\u22F9\u0338","notinva":"\u2209","notinvb":"\u22F7","notinvc":"\u22F6","NotLeftTriangleBar":"\u29CF\u0338","NotLeftTriangle":"\u22EA","NotLeftTriangleEqual":"\u22EC","NotLess":"\u226E","NotLessEqual":"\u2270","NotLessGreater":"\u2278","NotLessLess":"\u226A\u0338","NotLessSlantEqual":"\u2A7D\u0338","NotLessTilde":"\u2274","NotNestedGreaterGreater":"\u2AA2\u0338","NotNestedLessLess":"\u2AA1\u0338","notni":"\u220C","notniva":"\u220C","notnivb":"\u22FE","notnivc":"\u22FD","NotPrecedes":"\u2280","NotPrecedesEqual":"\u2AAF\u0338","NotPrecedesSlantEqual":"\u22E0","NotReverseElement":"\u220C","NotRightTriangleBar":"\u29D0\u0338","NotRightTriangle":"\u22EB","NotRightTriangleEqual":"\u22ED","NotSquareSubset":"\u228F\u0338","NotSquareSubsetEqual":"\u22E2","NotSquareSuperset":"\u2290\u0338","NotSquareSupersetEqual":"\u22E3","NotSubset":"\u2282\u20D2","NotSubsetEqual":"\u2288","NotSucceeds":"\u2281","NotSucceedsEqual":"\u2AB0\u0338","NotSucceedsSlantEqual":"\u22E1","NotSucceedsTilde":"\u227F\u0338","NotSuperset":"\u2283\u20D2","NotSupersetEqual":"\u2289","NotTilde":"\u2241","NotTildeEqual":"\u2244","NotTildeFullEqual":"\u2247","NotTildeTilde":"\u2249","NotVerticalBar":"\u2224","nparallel":"\u2226","npar":"\u2226","nparsl":"\u2AFD\u20E5","npart":"\u2202\u0338","npolint":"\u2A14","npr":"\u2280","nprcue":"\u22E0","nprec":"\u2280","npreceq":"\u2AAF\u0338","npre":"\u2AAF\u0338","nrarrc":"\u2933\u0338","nrarr":"\u219B","nrArr":"\u21CF","nrarrw":"\u219D\u0338","nrightarrow":"\u219B","nRightarrow":"\u21CF","nrtri":"\u22EB","nrtrie":"\u22ED","nsc":"\u2281","nsccue":"\u22E1","nsce":"\u2AB0\u0338","Nscr":"\uD835\uDCA9","nscr":"\uD835\uDCC3","nshortmid":"\u2224","nshortparallel":"\u2226","nsim":"\u2241","nsime":"\u2244","nsimeq":"\u2244","nsmid":"\u2224","nspar":"\u2226","nsqsube":"\u22E2","nsqsupe":"\u22E3","nsub":"\u2284","nsubE":"\u2AC5\u0338","nsube":"\u2288","nsubset":"\u2282\u20D2","nsubseteq":"\u2288","nsubseteqq":"\u2AC5\u0338","nsucc":"\u2281","nsucceq":"\u2AB0\u0338","nsup":"\u2285","nsupE":"\u2AC6\u0338","nsupe":"\u2289","nsupset":"\u2283\u20D2","nsupseteq":"\u2289","nsupseteqq":"\u2AC6\u0338","ntgl":"\u2279","Ntilde":"\u00D1","ntilde":"\u00F1","ntlg":"\u2278","ntriangleleft":"\u22EA","ntrianglelefteq":"\u22EC","ntriangleright":"\u22EB","ntrianglerighteq":"\u22ED","Nu":"\u039D","nu":"\u03BD","num":"#","numero":"\u2116","numsp":"\u2007","nvap":"\u224D\u20D2","nvdash":"\u22AC","nvDash":"\u22AD","nVdash":"\u22AE","nVDash":"\u22AF","nvge":"\u2265\u20D2","nvgt":">\u20D2","nvHarr":"\u2904","nvinfin":"\u29DE","nvlArr":"\u2902","nvle":"\u2264\u20D2","nvlt":"<\u20D2","nvltrie":"\u22B4\u20D2","nvrArr":"\u2903","nvrtrie":"\u22B5\u20D2","nvsim":"\u223C\u20D2","nwarhk":"\u2923","nwarr":"\u2196","nwArr":"\u21D6","nwarrow":"\u2196","nwnear":"\u2927","Oacute":"\u00D3","oacute":"\u00F3","oast":"\u229B","Ocirc":"\u00D4","ocirc":"\u00F4","ocir":"\u229A","Ocy":"\u041E","ocy":"\u043E","odash":"\u229D","Odblac":"\u0150","odblac":"\u0151","odiv":"\u2A38","odot":"\u2299","odsold":"\u29BC","OElig":"\u0152","oelig":"\u0153","ofcir":"\u29BF","Ofr":"\uD835\uDD12","ofr":"\uD835\uDD2C","ogon":"\u02DB","Ograve":"\u00D2","ograve":"\u00F2","ogt":"\u29C1","ohbar":"\u29B5","ohm":"\u03A9","oint":"\u222E","olarr":"\u21BA","olcir":"\u29BE","olcross":"\u29BB","oline":"\u203E","olt":"\u29C0","Omacr":"\u014C","omacr":"\u014D","Omega":"\u03A9","omega":"\u03C9","Omicron":"\u039F","omicron":"\u03BF","omid":"\u29B6","ominus":"\u2296","Oopf":"\uD835\uDD46","oopf":"\uD835\uDD60","opar":"\u29B7","OpenCurlyDoubleQuote":"\u201C","OpenCurlyQuote":"\u2018","operp":"\u29B9","oplus":"\u2295","orarr":"\u21BB","Or":"\u2A54","or":"\u2228","ord":"\u2A5D","order":"\u2134","orderof":"\u2134","ordf":"\u00AA","ordm":"\u00BA","origof":"\u22B6","oror":"\u2A56","orslope":"\u2A57","orv":"\u2A5B","oS":"\u24C8","Oscr":"\uD835\uDCAA","oscr":"\u2134","Oslash":"\u00D8","oslash":"\u00F8","osol":"\u2298","Otilde":"\u00D5","otilde":"\u00F5","otimesas":"\u2A36","Otimes":"\u2A37","otimes":"\u2297","Ouml":"\u00D6","ouml":"\u00F6","ovbar":"\u233D","OverBar":"\u203E","OverBrace":"\u23DE","OverBracket":"\u23B4","OverParenthesis":"\u23DC","para":"\u00B6","parallel":"\u2225","par":"\u2225","parsim":"\u2AF3","parsl":"\u2AFD","part":"\u2202","PartialD":"\u2202","Pcy":"\u041F","pcy":"\u043F","percnt":"%","period":".","permil":"\u2030","perp":"\u22A5","pertenk":"\u2031","Pfr":"\uD835\uDD13","pfr":"\uD835\uDD2D","Phi":"\u03A6","phi":"\u03C6","phiv":"\u03D5","phmmat":"\u2133","phone":"\u260E","Pi":"\u03A0","pi":"\u03C0","pitchfork":"\u22D4","piv":"\u03D6","planck":"\u210F","planckh":"\u210E","plankv":"\u210F","plusacir":"\u2A23","plusb":"\u229E","pluscir":"\u2A22","plus":"+","plusdo":"\u2214","plusdu":"\u2A25","pluse":"\u2A72","PlusMinus":"\u00B1","plusmn":"\u00B1","plussim":"\u2A26","plustwo":"\u2A27","pm":"\u00B1","Poincareplane":"\u210C","pointint":"\u2A15","popf":"\uD835\uDD61","Popf":"\u2119","pound":"\u00A3","prap":"\u2AB7","Pr":"\u2ABB","pr":"\u227A","prcue":"\u227C","precapprox":"\u2AB7","prec":"\u227A","preccurlyeq":"\u227C","Precedes":"\u227A","PrecedesEqual":"\u2AAF","PrecedesSlantEqual":"\u227C","PrecedesTilde":"\u227E","preceq":"\u2AAF","precnapprox":"\u2AB9","precneqq":"\u2AB5","precnsim":"\u22E8","pre":"\u2AAF","prE":"\u2AB3","precsim":"\u227E","prime":"\u2032","Prime":"\u2033","primes":"\u2119","prnap":"\u2AB9","prnE":"\u2AB5","prnsim":"\u22E8","prod":"\u220F","Product":"\u220F","profalar":"\u232E","profline":"\u2312","profsurf":"\u2313","prop":"\u221D","Proportional":"\u221D","Proportion":"\u2237","propto":"\u221D","prsim":"\u227E","prurel":"\u22B0","Pscr":"\uD835\uDCAB","pscr":"\uD835\uDCC5","Psi":"\u03A8","psi":"\u03C8","puncsp":"\u2008","Qfr":"\uD835\uDD14","qfr":"\uD835\uDD2E","qint":"\u2A0C","qopf":"\uD835\uDD62","Qopf":"\u211A","qprime":"\u2057","Qscr":"\uD835\uDCAC","qscr":"\uD835\uDCC6","quaternions":"\u210D","quatint":"\u2A16","quest":"?","questeq":"\u225F","quot":"\"","QUOT":"\"","rAarr":"\u21DB","race":"\u223D\u0331","Racute":"\u0154","racute":"\u0155","radic":"\u221A","raemptyv":"\u29B3","rang":"\u27E9","Rang":"\u27EB","rangd":"\u2992","range":"\u29A5","rangle":"\u27E9","raquo":"\u00BB","rarrap":"\u2975","rarrb":"\u21E5","rarrbfs":"\u2920","rarrc":"\u2933","rarr":"\u2192","Rarr":"\u21A0","rArr":"\u21D2","rarrfs":"\u291E","rarrhk":"\u21AA","rarrlp":"\u21AC","rarrpl":"\u2945","rarrsim":"\u2974","Rarrtl":"\u2916","rarrtl":"\u21A3","rarrw":"\u219D","ratail":"\u291A","rAtail":"\u291C","ratio":"\u2236","rationals":"\u211A","rbarr":"\u290D","rBarr":"\u290F","RBarr":"\u2910","rbbrk":"\u2773","rbrace":"}","rbrack":"]","rbrke":"\u298C","rbrksld":"\u298E","rbrkslu":"\u2990","Rcaron":"\u0158","rcaron":"\u0159","Rcedil":"\u0156","rcedil":"\u0157","rceil":"\u2309","rcub":"}","Rcy":"\u0420","rcy":"\u0440","rdca":"\u2937","rdldhar":"\u2969","rdquo":"\u201D","rdquor":"\u201D","rdsh":"\u21B3","real":"\u211C","realine":"\u211B","realpart":"\u211C","reals":"\u211D","Re":"\u211C","rect":"\u25AD","reg":"\u00AE","REG":"\u00AE","ReverseElement":"\u220B","ReverseEquilibrium":"\u21CB","ReverseUpEquilibrium":"\u296F","rfisht":"\u297D","rfloor":"\u230B","rfr":"\uD835\uDD2F","Rfr":"\u211C","rHar":"\u2964","rhard":"\u21C1","rharu":"\u21C0","rharul":"\u296C","Rho":"\u03A1","rho":"\u03C1","rhov":"\u03F1","RightAngleBracket":"\u27E9","RightArrowBar":"\u21E5","rightarrow":"\u2192","RightArrow":"\u2192","Rightarrow":"\u21D2","RightArrowLeftArrow":"\u21C4","rightarrowtail":"\u21A3","RightCeiling":"\u2309","RightDoubleBracket":"\u27E7","RightDownTeeVector":"\u295D","RightDownVectorBar":"\u2955","RightDownVector":"\u21C2","RightFloor":"\u230B","rightharpoondown":"\u21C1","rightharpoonup":"\u21C0","rightleftarrows":"\u21C4","rightleftharpoons":"\u21CC","rightrightarrows":"\u21C9","rightsquigarrow":"\u219D","RightTeeArrow":"\u21A6","RightTee":"\u22A2","RightTeeVector":"\u295B","rightthreetimes":"\u22CC","RightTriangleBar":"\u29D0","RightTriangle":"\u22B3","RightTriangleEqual":"\u22B5","RightUpDownVector":"\u294F","RightUpTeeVector":"\u295C","RightUpVectorBar":"\u2954","RightUpVector":"\u21BE","RightVectorBar":"\u2953","RightVector":"\u21C0","ring":"\u02DA","risingdotseq":"\u2253","rlarr":"\u21C4","rlhar":"\u21CC","rlm":"\u200F","rmoustache":"\u23B1","rmoust":"\u23B1","rnmid":"\u2AEE","roang":"\u27ED","roarr":"\u21FE","robrk":"\u27E7","ropar":"\u2986","ropf":"\uD835\uDD63","Ropf":"\u211D","roplus":"\u2A2E","rotimes":"\u2A35","RoundImplies":"\u2970","rpar":")","rpargt":"\u2994","rppolint":"\u2A12","rrarr":"\u21C9","Rrightarrow":"\u21DB","rsaquo":"\u203A","rscr":"\uD835\uDCC7","Rscr":"\u211B","rsh":"\u21B1","Rsh":"\u21B1","rsqb":"]","rsquo":"\u2019","rsquor":"\u2019","rthree":"\u22CC","rtimes":"\u22CA","rtri":"\u25B9","rtrie":"\u22B5","rtrif":"\u25B8","rtriltri":"\u29CE","RuleDelayed":"\u29F4","ruluhar":"\u2968","rx":"\u211E","Sacute":"\u015A","sacute":"\u015B","sbquo":"\u201A","scap":"\u2AB8","Scaron":"\u0160","scaron":"\u0161","Sc":"\u2ABC","sc":"\u227B","sccue":"\u227D","sce":"\u2AB0","scE":"\u2AB4","Scedil":"\u015E","scedil":"\u015F","Scirc":"\u015C","scirc":"\u015D","scnap":"\u2ABA","scnE":"\u2AB6","scnsim":"\u22E9","scpolint":"\u2A13","scsim":"\u227F","Scy":"\u0421","scy":"\u0441","sdotb":"\u22A1","sdot":"\u22C5","sdote":"\u2A66","searhk":"\u2925","searr":"\u2198","seArr":"\u21D8","searrow":"\u2198","sect":"\u00A7","semi":";","seswar":"\u2929","setminus":"\u2216","setmn":"\u2216","sext":"\u2736","Sfr":"\uD835\uDD16","sfr":"\uD835\uDD30","sfrown":"\u2322","sharp":"\u266F","SHCHcy":"\u0429","shchcy":"\u0449","SHcy":"\u0428","shcy":"\u0448","ShortDownArrow":"\u2193","ShortLeftArrow":"\u2190","shortmid":"\u2223","shortparallel":"\u2225","ShortRightArrow":"\u2192","ShortUpArrow":"\u2191","shy":"\u00AD","Sigma":"\u03A3","sigma":"\u03C3","sigmaf":"\u03C2","sigmav":"\u03C2","sim":"\u223C","simdot":"\u2A6A","sime":"\u2243","simeq":"\u2243","simg":"\u2A9E","simgE":"\u2AA0","siml":"\u2A9D","simlE":"\u2A9F","simne":"\u2246","simplus":"\u2A24","simrarr":"\u2972","slarr":"\u2190","SmallCircle":"\u2218","smallsetminus":"\u2216","smashp":"\u2A33","smeparsl":"\u29E4","smid":"\u2223","smile":"\u2323","smt":"\u2AAA","smte":"\u2AAC","smtes":"\u2AAC\uFE00","SOFTcy":"\u042C","softcy":"\u044C","solbar":"\u233F","solb":"\u29C4","sol":"/","Sopf":"\uD835\uDD4A","sopf":"\uD835\uDD64","spades":"\u2660","spadesuit":"\u2660","spar":"\u2225","sqcap":"\u2293","sqcaps":"\u2293\uFE00","sqcup":"\u2294","sqcups":"\u2294\uFE00","Sqrt":"\u221A","sqsub":"\u228F","sqsube":"\u2291","sqsubset":"\u228F","sqsubseteq":"\u2291","sqsup":"\u2290","sqsupe":"\u2292","sqsupset":"\u2290","sqsupseteq":"\u2292","square":"\u25A1","Square":"\u25A1","SquareIntersection":"\u2293","SquareSubset":"\u228F","SquareSubsetEqual":"\u2291","SquareSuperset":"\u2290","SquareSupersetEqual":"\u2292","SquareUnion":"\u2294","squarf":"\u25AA","squ":"\u25A1","squf":"\u25AA","srarr":"\u2192","Sscr":"\uD835\uDCAE","sscr":"\uD835\uDCC8","ssetmn":"\u2216","ssmile":"\u2323","sstarf":"\u22C6","Star":"\u22C6","star":"\u2606","starf":"\u2605","straightepsilon":"\u03F5","straightphi":"\u03D5","strns":"\u00AF","sub":"\u2282","Sub":"\u22D0","subdot":"\u2ABD","subE":"\u2AC5","sube":"\u2286","subedot":"\u2AC3","submult":"\u2AC1","subnE":"\u2ACB","subne":"\u228A","subplus":"\u2ABF","subrarr":"\u2979","subset":"\u2282","Subset":"\u22D0","subseteq":"\u2286","subseteqq":"\u2AC5","SubsetEqual":"\u2286","subsetneq":"\u228A","subsetneqq":"\u2ACB","subsim":"\u2AC7","subsub":"\u2AD5","subsup":"\u2AD3","succapprox":"\u2AB8","succ":"\u227B","succcurlyeq":"\u227D","Succeeds":"\u227B","SucceedsEqual":"\u2AB0","SucceedsSlantEqual":"\u227D","SucceedsTilde":"\u227F","succeq":"\u2AB0","succnapprox":"\u2ABA","succneqq":"\u2AB6","succnsim":"\u22E9","succsim":"\u227F","SuchThat":"\u220B","sum":"\u2211","Sum":"\u2211","sung":"\u266A","sup1":"\u00B9","sup2":"\u00B2","sup3":"\u00B3","sup":"\u2283","Sup":"\u22D1","supdot":"\u2ABE","supdsub":"\u2AD8","supE":"\u2AC6","supe":"\u2287","supedot":"\u2AC4","Superset":"\u2283","SupersetEqual":"\u2287","suphsol":"\u27C9","suphsub":"\u2AD7","suplarr":"\u297B","supmult":"\u2AC2","supnE":"\u2ACC","supne":"\u228B","supplus":"\u2AC0","supset":"\u2283","Supset":"\u22D1","supseteq":"\u2287","supseteqq":"\u2AC6","supsetneq":"\u228B","supsetneqq":"\u2ACC","supsim":"\u2AC8","supsub":"\u2AD4","supsup":"\u2AD6","swarhk":"\u2926","swarr":"\u2199","swArr":"\u21D9","swarrow":"\u2199","swnwar":"\u292A","szlig":"\u00DF","Tab":"\t","target":"\u2316","Tau":"\u03A4","tau":"\u03C4","tbrk":"\u23B4","Tcaron":"\u0164","tcaron":"\u0165","Tcedil":"\u0162","tcedil":"\u0163","Tcy":"\u0422","tcy":"\u0442","tdot":"\u20DB","telrec":"\u2315","Tfr":"\uD835\uDD17","tfr":"\uD835\uDD31","there4":"\u2234","therefore":"\u2234","Therefore":"\u2234","Theta":"\u0398","theta":"\u03B8","thetasym":"\u03D1","thetav":"\u03D1","thickapprox":"\u2248","thicksim":"\u223C","ThickSpace":"\u205F\u200A","ThinSpace":"\u2009","thinsp":"\u2009","thkap":"\u2248","thksim":"\u223C","THORN":"\u00DE","thorn":"\u00FE","tilde":"\u02DC","Tilde":"\u223C","TildeEqual":"\u2243","TildeFullEqual":"\u2245","TildeTilde":"\u2248","timesbar":"\u2A31","timesb":"\u22A0","times":"\u00D7","timesd":"\u2A30","tint":"\u222D","toea":"\u2928","topbot":"\u2336","topcir":"\u2AF1","top":"\u22A4","Topf":"\uD835\uDD4B","topf":"\uD835\uDD65","topfork":"\u2ADA","tosa":"\u2929","tprime":"\u2034","trade":"\u2122","TRADE":"\u2122","triangle":"\u25B5","triangledown":"\u25BF","triangleleft":"\u25C3","trianglelefteq":"\u22B4","triangleq":"\u225C","triangleright":"\u25B9","trianglerighteq":"\u22B5","tridot":"\u25EC","trie":"\u225C","triminus":"\u2A3A","TripleDot":"\u20DB","triplus":"\u2A39","trisb":"\u29CD","tritime":"\u2A3B","trpezium":"\u23E2","Tscr":"\uD835\uDCAF","tscr":"\uD835\uDCC9","TScy":"\u0426","tscy":"\u0446","TSHcy":"\u040B","tshcy":"\u045B","Tstrok":"\u0166","tstrok":"\u0167","twixt":"\u226C","twoheadleftarrow":"\u219E","twoheadrightarrow":"\u21A0","Uacute":"\u00DA","uacute":"\u00FA","uarr":"\u2191","Uarr":"\u219F","uArr":"\u21D1","Uarrocir":"\u2949","Ubrcy":"\u040E","ubrcy":"\u045E","Ubreve":"\u016C","ubreve":"\u016D","Ucirc":"\u00DB","ucirc":"\u00FB","Ucy":"\u0423","ucy":"\u0443","udarr":"\u21C5","Udblac":"\u0170","udblac":"\u0171","udhar":"\u296E","ufisht":"\u297E","Ufr":"\uD835\uDD18","ufr":"\uD835\uDD32","Ugrave":"\u00D9","ugrave":"\u00F9","uHar":"\u2963","uharl":"\u21BF","uharr":"\u21BE","uhblk":"\u2580","ulcorn":"\u231C","ulcorner":"\u231C","ulcrop":"\u230F","ultri":"\u25F8","Umacr":"\u016A","umacr":"\u016B","uml":"\u00A8","UnderBar":"_","UnderBrace":"\u23DF","UnderBracket":"\u23B5","UnderParenthesis":"\u23DD","Union":"\u22C3","UnionPlus":"\u228E","Uogon":"\u0172","uogon":"\u0173","Uopf":"\uD835\uDD4C","uopf":"\uD835\uDD66","UpArrowBar":"\u2912","uparrow":"\u2191","UpArrow":"\u2191","Uparrow":"\u21D1","UpArrowDownArrow":"\u21C5","updownarrow":"\u2195","UpDownArrow":"\u2195","Updownarrow":"\u21D5","UpEquilibrium":"\u296E","upharpoonleft":"\u21BF","upharpoonright":"\u21BE","uplus":"\u228E","UpperLeftArrow":"\u2196","UpperRightArrow":"\u2197","upsi":"\u03C5","Upsi":"\u03D2","upsih":"\u03D2","Upsilon":"\u03A5","upsilon":"\u03C5","UpTeeArrow":"\u21A5","UpTee":"\u22A5","upuparrows":"\u21C8","urcorn":"\u231D","urcorner":"\u231D","urcrop":"\u230E","Uring":"\u016E","uring":"\u016F","urtri":"\u25F9","Uscr":"\uD835\uDCB0","uscr":"\uD835\uDCCA","utdot":"\u22F0","Utilde":"\u0168","utilde":"\u0169","utri":"\u25B5","utrif":"\u25B4","uuarr":"\u21C8","Uuml":"\u00DC","uuml":"\u00FC","uwangle":"\u29A7","vangrt":"\u299C","varepsilon":"\u03F5","varkappa":"\u03F0","varnothing":"\u2205","varphi":"\u03D5","varpi":"\u03D6","varpropto":"\u221D","varr":"\u2195","vArr":"\u21D5","varrho":"\u03F1","varsigma":"\u03C2","varsubsetneq":"\u228A\uFE00","varsubsetneqq":"\u2ACB\uFE00","varsupsetneq":"\u228B\uFE00","varsupsetneqq":"\u2ACC\uFE00","vartheta":"\u03D1","vartriangleleft":"\u22B2","vartriangleright":"\u22B3","vBar":"\u2AE8","Vbar":"\u2AEB","vBarv":"\u2AE9","Vcy":"\u0412","vcy":"\u0432","vdash":"\u22A2","vDash":"\u22A8","Vdash":"\u22A9","VDash":"\u22AB","Vdashl":"\u2AE6","veebar":"\u22BB","vee":"\u2228","Vee":"\u22C1","veeeq":"\u225A","vellip":"\u22EE","verbar":"|","Verbar":"\u2016","vert":"|","Vert":"\u2016","VerticalBar":"\u2223","VerticalLine":"|","VerticalSeparator":"\u2758","VerticalTilde":"\u2240","VeryThinSpace":"\u200A","Vfr":"\uD835\uDD19","vfr":"\uD835\uDD33","vltri":"\u22B2","vnsub":"\u2282\u20D2","vnsup":"\u2283\u20D2","Vopf":"\uD835\uDD4D","vopf":"\uD835\uDD67","vprop":"\u221D","vrtri":"\u22B3","Vscr":"\uD835\uDCB1","vscr":"\uD835\uDCCB","vsubnE":"\u2ACB\uFE00","vsubne":"\u228A\uFE00","vsupnE":"\u2ACC\uFE00","vsupne":"\u228B\uFE00","Vvdash":"\u22AA","vzigzag":"\u299A","Wcirc":"\u0174","wcirc":"\u0175","wedbar":"\u2A5F","wedge":"\u2227","Wedge":"\u22C0","wedgeq":"\u2259","weierp":"\u2118","Wfr":"\uD835\uDD1A","wfr":"\uD835\uDD34","Wopf":"\uD835\uDD4E","wopf":"\uD835\uDD68","wp":"\u2118","wr":"\u2240","wreath":"\u2240","Wscr":"\uD835\uDCB2","wscr":"\uD835\uDCCC","xcap":"\u22C2","xcirc":"\u25EF","xcup":"\u22C3","xdtri":"\u25BD","Xfr":"\uD835\uDD1B","xfr":"\uD835\uDD35","xharr":"\u27F7","xhArr":"\u27FA","Xi":"\u039E","xi":"\u03BE","xlarr":"\u27F5","xlArr":"\u27F8","xmap":"\u27FC","xnis":"\u22FB","xodot":"\u2A00","Xopf":"\uD835\uDD4F","xopf":"\uD835\uDD69","xoplus":"\u2A01","xotime":"\u2A02","xrarr":"\u27F6","xrArr":"\u27F9","Xscr":"\uD835\uDCB3","xscr":"\uD835\uDCCD","xsqcup":"\u2A06","xuplus":"\u2A04","xutri":"\u25B3","xvee":"\u22C1","xwedge":"\u22C0","Yacute":"\u00DD","yacute":"\u00FD","YAcy":"\u042F","yacy":"\u044F","Ycirc":"\u0176","ycirc":"\u0177","Ycy":"\u042B","ycy":"\u044B","yen":"\u00A5","Yfr":"\uD835\uDD1C","yfr":"\uD835\uDD36","YIcy":"\u0407","yicy":"\u0457","Yopf":"\uD835\uDD50","yopf":"\uD835\uDD6A","Yscr":"\uD835\uDCB4","yscr":"\uD835\uDCCE","YUcy":"\u042E","yucy":"\u044E","yuml":"\u00FF","Yuml":"\u0178","Zacute":"\u0179","zacute":"\u017A","Zcaron":"\u017D","zcaron":"\u017E","Zcy":"\u0417","zcy":"\u0437","Zdot":"\u017B","zdot":"\u017C","zeetrf":"\u2128","ZeroWidthSpace":"\u200B","Zeta":"\u0396","zeta":"\u03B6","zfr":"\uD835\uDD37","Zfr":"\u2128","ZHcy":"\u0416","zhcy":"\u0436","zigrarr":"\u21DD","zopf":"\uD835\uDD6B","Zopf":"\u2124","Zscr":"\uD835\uDCB5","zscr":"\uD835\uDCCF","zwj":"\u200D","zwnj":"\u200C"}
-},{}],53:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 module.exports={"Aacute":"\u00C1","aacute":"\u00E1","Acirc":"\u00C2","acirc":"\u00E2","acute":"\u00B4","AElig":"\u00C6","aelig":"\u00E6","Agrave":"\u00C0","agrave":"\u00E0","amp":"&","AMP":"&","Aring":"\u00C5","aring":"\u00E5","Atilde":"\u00C3","atilde":"\u00E3","Auml":"\u00C4","auml":"\u00E4","brvbar":"\u00A6","Ccedil":"\u00C7","ccedil":"\u00E7","cedil":"\u00B8","cent":"\u00A2","copy":"\u00A9","COPY":"\u00A9","curren":"\u00A4","deg":"\u00B0","divide":"\u00F7","Eacute":"\u00C9","eacute":"\u00E9","Ecirc":"\u00CA","ecirc":"\u00EA","Egrave":"\u00C8","egrave":"\u00E8","ETH":"\u00D0","eth":"\u00F0","Euml":"\u00CB","euml":"\u00EB","frac12":"\u00BD","frac14":"\u00BC","frac34":"\u00BE","gt":">","GT":">","Iacute":"\u00CD","iacute":"\u00ED","Icirc":"\u00CE","icirc":"\u00EE","iexcl":"\u00A1","Igrave":"\u00CC","igrave":"\u00EC","iquest":"\u00BF","Iuml":"\u00CF","iuml":"\u00EF","laquo":"\u00AB","lt":"<","LT":"<","macr":"\u00AF","micro":"\u00B5","middot":"\u00B7","nbsp":"\u00A0","not":"\u00AC","Ntilde":"\u00D1","ntilde":"\u00F1","Oacute":"\u00D3","oacute":"\u00F3","Ocirc":"\u00D4","ocirc":"\u00F4","Ograve":"\u00D2","ograve":"\u00F2","ordf":"\u00AA","ordm":"\u00BA","Oslash":"\u00D8","oslash":"\u00F8","Otilde":"\u00D5","otilde":"\u00F5","Ouml":"\u00D6","ouml":"\u00F6","para":"\u00B6","plusmn":"\u00B1","pound":"\u00A3","quot":"\"","QUOT":"\"","raquo":"\u00BB","reg":"\u00AE","REG":"\u00AE","sect":"\u00A7","shy":"\u00AD","sup1":"\u00B9","sup2":"\u00B2","sup3":"\u00B3","szlig":"\u00DF","THORN":"\u00DE","thorn":"\u00FE","times":"\u00D7","Uacute":"\u00DA","uacute":"\u00FA","Ucirc":"\u00DB","ucirc":"\u00FB","Ugrave":"\u00D9","ugrave":"\u00F9","uml":"\u00A8","Uuml":"\u00DC","uuml":"\u00FC","Yacute":"\u00DD","yacute":"\u00FD","yen":"\u00A5","yuml":"\u00FF"}
-},{}],54:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 module.exports={"amp":"&","apos":"'","gt":">","lt":"<","quot":"\""}
 
-},{}],55:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 /*!
  * @overview es6-promise - a tiny implementation of Promises/A+.
  * @copyright Copyright (c) 2014 Yehuda Katz, Tom Dale, Stefan Penner and contributors (Conversion to ES6 API by Jake Archibald)
@@ -26290,7 +19411,7 @@ return Promise$1;
 
 
 
-},{}],56:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 /*!
  * escape-html
  * Copyright(c) 2012-2013 TJ Holowaychuk
@@ -26370,7 +19491,7 @@ function escapeHtml(string) {
     : html;
 }
 
-},{}],57:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 /**
  *
  * @namespace faker.address
@@ -26598,7 +19719,7 @@ function Address (faker) {
 
 module.exports = Address;
 
-},{}],58:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 /**
  *
  * @namespace faker.commerce
@@ -26719,7 +19840,7 @@ var Commerce = function (faker) {
 
 module['exports'] = Commerce;
 
-},{}],59:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 /**
  *
  * @namespace faker.company
@@ -26844,7 +19965,7 @@ var Company = function (faker) {
 }
 
 module['exports'] = Company;
-},{}],60:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 /**
  *
  * @namespace faker.database
@@ -26910,7 +20031,7 @@ var Database = function (faker) {
 
 module["exports"] = Database;
 
-},{}],61:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 /**
  *
  * @namespace faker.date
@@ -27044,7 +20165,7 @@ var _Date = function (faker) {
 };
 
 module['exports'] = _Date;
-},{}],62:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 /*
   fake.js - generator method for combining faker methods based on string input
 
@@ -27153,7 +20274,7 @@ function Fake (faker) {
 }
 
 module['exports'] = Fake;
-},{}],63:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 /**
  * @namespace faker.finance
  */
@@ -27374,7 +20495,7 @@ var Finance = function (faker) {
 
 module['exports'] = Finance;
 
-},{"./iban":66}],64:[function(require,module,exports){
+},{"./iban":59}],57:[function(require,module,exports){
 /**
  *
  * @namespace faker.hacker
@@ -27460,7 +20581,7 @@ var Hacker = function (faker) {
 };
 
 module['exports'] = Hacker;
-},{}],65:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 /**
  *
  * @namespace faker.helpers
@@ -27723,7 +20844,7 @@ String.prototype.capitalize = function () { //v1.0
 
 module['exports'] = Helpers;
 
-},{}],66:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 module["exports"] = {
   alpha: [
     'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'
@@ -28860,7 +21981,7 @@ module["exports"] = {
     "YE", "YT", "YU", "ZA", "ZM", "ZR", "ZW"
   ]
 }
-},{}],67:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 /**
  *
  * @namespace faker.image
@@ -29074,7 +22195,7 @@ var Image = function (faker) {
 }
 
 module["exports"] = Image;
-},{}],68:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 /*
 
    this index.js file is used for including the faker library as a CommonJS module, instead of a bundle
@@ -29226,7 +22347,7 @@ Faker.prototype.seed = function(value) {
 }
 module['exports'] = Faker;
 
-},{"./address":57,"./commerce":58,"./company":59,"./database":60,"./date":61,"./fake":62,"./finance":63,"./hacker":64,"./helpers":65,"./image":67,"./internet":69,"./lorem":70,"./name":71,"./phone_number":72,"./random":73,"./system":74}],69:[function(require,module,exports){
+},{"./address":50,"./commerce":51,"./company":52,"./database":53,"./date":54,"./fake":55,"./finance":56,"./hacker":57,"./helpers":58,"./image":60,"./internet":62,"./lorem":63,"./name":64,"./phone_number":65,"./random":66,"./system":67}],62:[function(require,module,exports){
 var random_ua = require('../vendor/user-agent');
 
 /**
@@ -29646,7 +22767,7 @@ var Internet = function (faker) {
 
 module["exports"] = Internet;
 
-},{"../vendor/user-agent":76}],70:[function(require,module,exports){
+},{"../vendor/user-agent":69}],63:[function(require,module,exports){
 
 /**
  *
@@ -29786,7 +22907,7 @@ var Lorem = function (faker) {
 
 module["exports"] = Lorem;
 
-},{}],71:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 /**
  *
  * @namespace faker.name
@@ -29965,7 +23086,7 @@ function Name (faker) {
 
 module['exports'] = Name;
 
-},{}],72:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 /**
  *
  * @namespace faker.phone
@@ -30010,7 +23131,7 @@ var Phone = function (faker) {
 };
 
 module['exports'] = Phone;
-},{}],73:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 var mersenne = require('../vendor/mersenne');
 
 /**
@@ -30227,7 +23348,7 @@ function Random (faker, seed) {
 
 module['exports'] = Random;
 
-},{"../vendor/mersenne":75}],74:[function(require,module,exports){
+},{"../vendor/mersenne":68}],67:[function(require,module,exports){
 // generates fake data for many computer systems properties
 
 /**
@@ -30389,7 +23510,7 @@ function System (faker) {
 
 module['exports'] = System;
 
-},{}],75:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 // this program is a JavaScript version of Mersenne Twister, with concealment and encapsulation in class,
 // an almost straight conversion from the original program, mt19937ar.c,
 // translated by y. okada on July 17, 2006.
@@ -30677,7 +23798,7 @@ exports.seed_array = function(A) {
     gen.init_by_array(A);
 }
 
-},{}],76:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 /*
 
 Copyright (c) 2012-2014 Jeffrey Mealo
@@ -30888,7 +24009,7 @@ exports.generate = function generate() {
     return browser[random[0]](random[1]);
 };
 
-},{}],77:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 'use strict';
 module.exports = function (buf) {
 	if (!(buf && buf.length > 1)) {
@@ -31342,10 +24463,10 @@ module.exports = function (buf) {
 	return null;
 };
 
-},{}],78:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 module.exports = require('util').format;
 
-},{"util":undefined}],79:[function(require,module,exports){
+},{"util":undefined}],72:[function(require,module,exports){
 'use strict';
 var http = require('http');
 var https = require('https');
@@ -31509,7 +24630,7 @@ function got(url, opts, cb) {
 
 module.exports = got;
 
-},{"duplexify":45,"http":undefined,"https":undefined,"infinity-agent":113,"is-stream":115,"lowercase-keys":180,"object-assign":80,"prepend-http":238,"read-all-stream":263,"statuses":285,"timed-out":289,"url":undefined,"zlib":undefined}],80:[function(require,module,exports){
+},{"duplexify":38,"http":undefined,"https":undefined,"infinity-agent":106,"is-stream":108,"lowercase-keys":172,"object-assign":73,"prepend-http":226,"read-all-stream":251,"statuses":273,"timed-out":277,"url":undefined,"zlib":undefined}],73:[function(require,module,exports){
 'use strict';
 
 function ToObject(val) {
@@ -31537,7 +24658,7 @@ module.exports = Object.assign || function (target, source) {
 	return to;
 };
 
-},{}],81:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 'use strict';
 module.exports = function (flag, argv) {
 	argv = argv || process.argv;
@@ -31549,7 +24670,7 @@ module.exports = function (flag, argv) {
 	return pos !== -1 && (terminatorPos === -1 ? true : pos < terminatorPos);
 };
 
-},{}],82:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 module.exports = CollectingHandler;
 
 function CollectingHandler(cbs){
@@ -31606,7 +24727,7 @@ CollectingHandler.prototype.restart = function(){
 	}
 };
 
-},{"./":89}],83:[function(require,module,exports){
+},{"./":82}],76:[function(require,module,exports){
 var index = require("./index.js"),
     DomHandler = index.DomHandler,
     DomUtils = index.DomUtils;
@@ -31703,7 +24824,7 @@ FeedHandler.prototype.onend = function(){
 
 module.exports = FeedHandler;
 
-},{"./index.js":89,"inherits":114}],84:[function(require,module,exports){
+},{"./index.js":82,"inherits":107}],77:[function(require,module,exports){
 var Tokenizer = require("./Tokenizer.js");
 
 /*
@@ -32058,7 +25179,7 @@ Parser.prototype.done = Parser.prototype.end;
 
 module.exports = Parser;
 
-},{"./Tokenizer.js":87,"events":undefined,"inherits":114}],85:[function(require,module,exports){
+},{"./Tokenizer.js":80,"events":undefined,"inherits":107}],78:[function(require,module,exports){
 module.exports = ProxyHandler;
 
 function ProxyHandler(cbs){
@@ -32086,7 +25207,7 @@ Object.keys(EVENTS).forEach(function(name){
 		throw Error("wrong number of arguments");
 	}
 });
-},{"./":89}],86:[function(require,module,exports){
+},{"./":82}],79:[function(require,module,exports){
 module.exports = Stream;
 
 var Parser = require("./WritableStream.js");
@@ -32122,7 +25243,7 @@ Object.keys(EVENTS).forEach(function(name){
 		throw Error("wrong number of arguments!");
 	}
 });
-},{"../":89,"./WritableStream.js":88,"inherits":114}],87:[function(require,module,exports){
+},{"../":82,"./WritableStream.js":81,"inherits":107}],80:[function(require,module,exports){
 module.exports = Tokenizer;
 
 var decodeCodePoint = require("entities/lib/decode_codepoint.js"),
@@ -33030,7 +26151,7 @@ Tokenizer.prototype._emitPartial = function(value){
 	}
 };
 
-},{"entities/lib/decode_codepoint.js":49,"entities/maps/entities.json":52,"entities/maps/legacy.json":53,"entities/maps/xml.json":54}],88:[function(require,module,exports){
+},{"entities/lib/decode_codepoint.js":42,"entities/maps/entities.json":45,"entities/maps/legacy.json":46,"entities/maps/xml.json":47}],81:[function(require,module,exports){
 module.exports = Stream;
 
 var Parser = require("./Parser.js"),
@@ -33056,7 +26177,7 @@ WritableStream.prototype._write = function(chunk, encoding, cb){
 	this._parser.write(chunk);
 	cb();
 };
-},{"./Parser.js":84,"buffer":undefined,"inherits":114,"readable-stream":274,"stream":undefined,"string_decoder":undefined}],89:[function(require,module,exports){
+},{"./Parser.js":77,"buffer":undefined,"inherits":107,"readable-stream":262,"stream":undefined,"string_decoder":undefined}],82:[function(require,module,exports){
 var Parser = require("./Parser.js"),
     DomHandler = require("domhandler");
 
@@ -33126,7 +26247,7 @@ module.exports = {
 	}
 };
 
-},{"./CollectingHandler.js":82,"./FeedHandler.js":83,"./Parser.js":84,"./ProxyHandler.js":85,"./Stream.js":86,"./Tokenizer.js":87,"./WritableStream.js":88,"domelementtype":33,"domhandler":34,"domutils":37}],90:[function(require,module,exports){
+},{"./CollectingHandler.js":75,"./FeedHandler.js":76,"./Parser.js":77,"./ProxyHandler.js":78,"./Stream.js":79,"./Tokenizer.js":80,"./WritableStream.js":81,"domelementtype":26,"domhandler":27,"domutils":30}],83:[function(require,module,exports){
 module.exports={
     "100": {
         "name": "Continue",
@@ -33406,7 +26527,7 @@ module.exports={
     }
 }
 
-},{}],91:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 var /**
      * @private
      * @type {Object}
@@ -33423,7 +26544,7 @@ module.exports = {
     }
 };
 
-},{"./db.json":90}],92:[function(require,module,exports){
+},{"./db.json":83}],85:[function(require,module,exports){
 "use strict";
 var Buffer = require("buffer").Buffer;
 
@@ -33980,7 +27101,7 @@ function findIdx(table, val) {
 }
 
 
-},{"buffer":undefined}],93:[function(require,module,exports){
+},{"buffer":undefined}],86:[function(require,module,exports){
 "use strict";
 
 // Description of supported double byte encodings and aliases.
@@ -34158,7 +27279,7 @@ module.exports = {
     'xxbig5': 'big5hkscs',
 };
 
-},{"./tables/big5-added.json":99,"./tables/cp936.json":100,"./tables/cp949.json":101,"./tables/cp950.json":102,"./tables/eucjp.json":103,"./tables/gb18030-ranges.json":104,"./tables/gbk-added.json":105,"./tables/shiftjis.json":106}],94:[function(require,module,exports){
+},{"./tables/big5-added.json":92,"./tables/cp936.json":93,"./tables/cp949.json":94,"./tables/cp950.json":95,"./tables/eucjp.json":96,"./tables/gb18030-ranges.json":97,"./tables/gbk-added.json":98,"./tables/shiftjis.json":99}],87:[function(require,module,exports){
 "use strict";
 
 // Update this array if you add/rename/remove files in this directory.
@@ -34182,7 +27303,7 @@ for (var i = 0; i < modules.length; i++) {
             exports[enc] = module[enc];
 }
 
-},{"./dbcs-codec":92,"./dbcs-data":93,"./internal":95,"./sbcs-codec":96,"./sbcs-data":98,"./sbcs-data-generated":97,"./utf16":107,"./utf7":108}],95:[function(require,module,exports){
+},{"./dbcs-codec":85,"./dbcs-data":86,"./internal":88,"./sbcs-codec":89,"./sbcs-data":91,"./sbcs-data-generated":90,"./utf16":100,"./utf7":101}],88:[function(require,module,exports){
 "use strict";
 var Buffer = require("buffer").Buffer;
 
@@ -34372,7 +27493,7 @@ InternalDecoderCesu8.prototype.end = function() {
     return res;
 }
 
-},{"buffer":undefined,"string_decoder":undefined}],96:[function(require,module,exports){
+},{"buffer":undefined,"string_decoder":undefined}],89:[function(require,module,exports){
 "use strict";
 var Buffer = require("buffer").Buffer;
 
@@ -34447,7 +27568,7 @@ SBCSDecoder.prototype.write = function(buf) {
 SBCSDecoder.prototype.end = function() {
 }
 
-},{"buffer":undefined}],97:[function(require,module,exports){
+},{"buffer":undefined}],90:[function(require,module,exports){
 "use strict";
 
 // Generated data for sbcs codec. Don't edit manually. Regenerate using generation/gen-sbcs.js script.
@@ -34899,7 +28020,7 @@ module.exports = {
     "chars": "���������������������������������กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรฤลฦวศษสหฬอฮฯะัาำิีึืฺุู����฿เแโใไๅๆ็่้๊๋์ํ๎๏๐๑๒๓๔๕๖๗๘๙๚๛����"
   }
 }
-},{}],98:[function(require,module,exports){
+},{}],91:[function(require,module,exports){
 "use strict";
 
 // Manually added data to be used by sbcs codec in addition to generated one.
@@ -35070,7 +28191,7 @@ module.exports = {
 };
 
 
-},{}],99:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 module.exports=[
 ["8740","䏰䰲䘃䖦䕸𧉧䵷䖳𧲱䳢𧳅㮕䜶䝄䱇䱀𤊿𣘗𧍒𦺋𧃒䱗𪍑䝏䗚䲅𧱬䴇䪤䚡𦬣爥𥩔𡩣𣸆𣽡晍囻"],
 ["8767","綕夝𨮹㷴霴𧯯寛𡵞媤㘥𩺰嫑宷峼杮薓𩥅瑡璝㡵𡵓𣚞𦀡㻬"],
@@ -35194,7 +28315,7 @@ module.exports=[
 ["fea1","𤅟𤩹𨮏孆𨰃𡢞瓈𡦈甎瓩甞𨻙𡩋寗𨺬鎅畍畊畧畮𤾂㼄𤴓疎瑝疞疴瘂瘬癑癏癯癶𦏵皐臯㟸𦤑𦤎皡皥皷盌𦾟葢𥂝𥅽𡸜眞眦着撯𥈠睘𣊬瞯𨥤𨥨𡛁矴砉𡍶𤨒棊碯磇磓隥礮𥗠磗礴碱𧘌辸袄𨬫𦂃𢘜禆褀椂禀𥡗禝𧬹礼禩渪𧄦㺨秆𩄍秔"]
 ]
 
-},{}],100:[function(require,module,exports){
+},{}],93:[function(require,module,exports){
 module.exports=[
 ["0","\u0000",127,"€"],
 ["8140","丂丄丅丆丏丒丗丟丠両丣並丩丮丯丱丳丵丷丼乀乁乂乄乆乊乑乕乗乚乛乢乣乤乥乧乨乪",5,"乲乴",9,"乿",6,"亇亊"],
@@ -35460,7 +28581,7 @@ module.exports=[
 ["fe40","兀嗀﨎﨏﨑﨓﨔礼﨟蘒﨡﨣﨤﨧﨨﨩"]
 ]
 
-},{}],101:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 module.exports=[
 ["0","\u0000",127],
 ["8141","갂갃갅갆갋",4,"갘갞갟갡갢갣갥",6,"갮갲갳갴"],
@@ -35735,7 +28856,7 @@ module.exports=[
 ["fda1","爻肴酵驍侯候厚后吼喉嗅帿後朽煦珝逅勛勳塤壎焄熏燻薰訓暈薨喧暄煊萱卉喙毁彙徽揮暉煇諱輝麾休携烋畦虧恤譎鷸兇凶匈洶胸黑昕欣炘痕吃屹紇訖欠欽歆吸恰洽翕興僖凞喜噫囍姬嬉希憙憘戱晞曦熙熹熺犧禧稀羲詰"]
 ]
 
-},{}],102:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 module.exports=[
 ["0","\u0000",127],
 ["a140","　，、。．‧；：？！︰…‥﹐﹑﹒·﹔﹕﹖﹗｜–︱—︳╴︴﹏（）︵︶｛｝︷︸〔〕︹︺【】︻︼《》︽︾〈〉︿﹀「」﹁﹂『』﹃﹄﹙﹚"],
@@ -35914,7 +29035,7 @@ module.exports=[
 ["f9a1","龤灨灥糷虪蠾蠽蠿讞貜躩軉靋顳顴飌饡馫驤驦驧鬤鸕鸗齈戇欞爧虌躨钂钀钁驩驨鬮鸙爩虋讟钃鱹麷癵驫鱺鸝灩灪麤齾齉龘碁銹裏墻恒粧嫺╔╦╗╠╬╣╚╩╝╒╤╕╞╪╡╘╧╛╓╥╖╟╫╢╙╨╜║═╭╮╰╯▓"]
 ]
 
-},{}],103:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
 module.exports=[
 ["0","\u0000",127],
 ["8ea1","｡",62],
@@ -36098,9 +29219,9 @@ module.exports=[
 ["8feda1","黸黿鼂鼃鼉鼏鼐鼑鼒鼔鼖鼗鼙鼚鼛鼟鼢鼦鼪鼫鼯鼱鼲鼴鼷鼹鼺鼼鼽鼿齁齃",4,"齓齕齖齗齘齚齝齞齨齩齭",4,"齳齵齺齽龏龐龑龒龔龖龗龞龡龢龣龥"]
 ]
 
-},{}],104:[function(require,module,exports){
+},{}],97:[function(require,module,exports){
 module.exports={"uChars":[128,165,169,178,184,216,226,235,238,244,248,251,253,258,276,284,300,325,329,334,364,463,465,467,469,471,473,475,477,506,594,610,712,716,730,930,938,962,970,1026,1104,1106,8209,8215,8218,8222,8231,8241,8244,8246,8252,8365,8452,8454,8458,8471,8482,8556,8570,8596,8602,8713,8720,8722,8726,8731,8737,8740,8742,8748,8751,8760,8766,8777,8781,8787,8802,8808,8816,8854,8858,8870,8896,8979,9322,9372,9548,9588,9616,9622,9634,9652,9662,9672,9676,9680,9702,9735,9738,9793,9795,11906,11909,11913,11917,11928,11944,11947,11951,11956,11960,11964,11979,12284,12292,12312,12319,12330,12351,12436,12447,12535,12543,12586,12842,12850,12964,13200,13215,13218,13253,13263,13267,13270,13384,13428,13727,13839,13851,14617,14703,14801,14816,14964,15183,15471,15585,16471,16736,17208,17325,17330,17374,17623,17997,18018,18212,18218,18301,18318,18760,18811,18814,18820,18823,18844,18848,18872,19576,19620,19738,19887,40870,59244,59336,59367,59413,59417,59423,59431,59437,59443,59452,59460,59478,59493,63789,63866,63894,63976,63986,64016,64018,64021,64025,64034,64037,64042,65074,65093,65107,65112,65127,65132,65375,65510,65536],"gbChars":[0,36,38,45,50,81,89,95,96,100,103,104,105,109,126,133,148,172,175,179,208,306,307,308,309,310,311,312,313,341,428,443,544,545,558,741,742,749,750,805,819,820,7922,7924,7925,7927,7934,7943,7944,7945,7950,8062,8148,8149,8152,8164,8174,8236,8240,8262,8264,8374,8380,8381,8384,8388,8390,8392,8393,8394,8396,8401,8406,8416,8419,8424,8437,8439,8445,8482,8485,8496,8521,8603,8936,8946,9046,9050,9063,9066,9076,9092,9100,9108,9111,9113,9131,9162,9164,9218,9219,11329,11331,11334,11336,11346,11361,11363,11366,11370,11372,11375,11389,11682,11686,11687,11692,11694,11714,11716,11723,11725,11730,11736,11982,11989,12102,12336,12348,12350,12384,12393,12395,12397,12510,12553,12851,12962,12973,13738,13823,13919,13933,14080,14298,14585,14698,15583,15847,16318,16434,16438,16481,16729,17102,17122,17315,17320,17402,17418,17859,17909,17911,17915,17916,17936,17939,17961,18664,18703,18814,18962,19043,33469,33470,33471,33484,33485,33490,33497,33501,33505,33513,33520,33536,33550,37845,37921,37948,38029,38038,38064,38065,38066,38069,38075,38076,38078,39108,39109,39113,39114,39115,39116,39265,39394,189000]}
-},{}],105:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 module.exports=[
 ["a140","",62],
 ["a180","",32],
@@ -36157,7 +29278,7 @@ module.exports=[
 ["fe80","䜣䜩䝼䞍⻊䥇䥺䥽䦂䦃䦅䦆䦟䦛䦷䦶䲣䲟䲠䲡䱷䲢䴓",6,"䶮",93]
 ]
 
-},{}],106:[function(require,module,exports){
+},{}],99:[function(require,module,exports){
 module.exports=[
 ["0","\u0000",128],
 ["a1","｡",62],
@@ -36284,7 +29405,7 @@ module.exports=[
 ["fc40","髜魵魲鮏鮱鮻鰀鵰鵫鶴鸙黑"]
 ]
 
-},{}],107:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 "use strict";
 var Buffer = require("buffer").Buffer;
 
@@ -36463,7 +29584,7 @@ function detectEncoding(buf, defaultEncoding) {
 
 
 
-},{"buffer":undefined}],108:[function(require,module,exports){
+},{"buffer":undefined}],101:[function(require,module,exports){
 "use strict";
 var Buffer = require("buffer").Buffer;
 
@@ -36755,7 +29876,7 @@ Utf7IMAPDecoder.prototype.end = function() {
 
 
 
-},{"buffer":undefined}],109:[function(require,module,exports){
+},{"buffer":undefined}],102:[function(require,module,exports){
 "use strict";
 
 var BOMChar = '\uFEFF';
@@ -36809,7 +29930,7 @@ StripBOMWrapper.prototype.end = function() {
 }
 
 
-},{}],110:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 "use strict";
 var Buffer = require("buffer").Buffer;
 
@@ -37026,7 +30147,7 @@ module.exports = function (iconv) {
     }
 }
 
-},{"buffer":undefined,"stream":undefined}],111:[function(require,module,exports){
+},{"buffer":undefined,"stream":undefined}],104:[function(require,module,exports){
 "use strict";
 
 // Some environments don't have global Buffer (e.g. React Native).
@@ -37176,7 +30297,7 @@ if ("Ā" != "\u0100") {
     console.error("iconv-lite warning: javascript files use encoding different from utf-8. See https://github.com/ashtuchkin/iconv-lite/wiki/Javascript-source-file-encodings for more info.");
 }
 
-},{"../encodings":94,"./bom-handling":109,"./extend-node":110,"./streams":112,"buffer":undefined}],112:[function(require,module,exports){
+},{"../encodings":87,"./bom-handling":102,"./extend-node":103,"./streams":105,"buffer":undefined}],105:[function(require,module,exports){
 "use strict";
 
 var Buffer = require("buffer").Buffer,
@@ -37299,7 +30420,7 @@ IconvLiteDecoderStream.prototype.collect = function(cb) {
 }
 
 
-},{"buffer":undefined,"stream":undefined}],113:[function(require,module,exports){
+},{"buffer":undefined,"stream":undefined}],106:[function(require,module,exports){
 'use strict';
 
 var http = require('http');
@@ -37342,10 +30463,10 @@ agent.httpsAgent = new https.Agent({maxSockets: Infinity});
 
 module.exports = agent;
 
-},{"http":undefined,"https":undefined,"url":undefined}],114:[function(require,module,exports){
+},{"http":undefined,"https":undefined,"url":undefined}],107:[function(require,module,exports){
 module.exports = require('util').inherits
 
-},{"util":undefined}],115:[function(require,module,exports){
+},{"util":undefined}],108:[function(require,module,exports){
 'use strict';
 
 var isStream = module.exports = function (stream) {
@@ -37368,14 +30489,14 @@ isStream.transform = function (stream) {
 	return isStream.duplex(stream) && typeof stream._transform === 'function' && typeof stream._transformState === 'object';
 };
 
-},{}],116:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],117:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 /*
  * Author: Alex Kocharin <alex@kocharin.ru>
  * GIT: https://github.com/rlidwka/jju
@@ -38129,7 +31250,7 @@ module.exports.tokenize = function tokenizeJSON(input, options) {
 }
 
 
-},{"./unicode":118}],118:[function(require,module,exports){
+},{"./unicode":111}],111:[function(require,module,exports){
 
 // This is autogenerated with esprima tools, see:
 // https://github.com/ariya/esprima/blob/master/esprima.js
@@ -38202,7 +31323,7 @@ module.exports.NonAsciiIdentifierStart = /[\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u
 
 module.exports.NonAsciiIdentifierPart = /[\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0300-\u0374\u0376\u0377\u037A-\u037D\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u0483-\u0487\u048A-\u0527\u0531-\u0556\u0559\u0561-\u0587\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\u05D0-\u05EA\u05F0-\u05F2\u0610-\u061A\u0620-\u0669\u066E-\u06D3\u06D5-\u06DC\u06DF-\u06E8\u06EA-\u06FC\u06FF\u0710-\u074A\u074D-\u07B1\u07C0-\u07F5\u07FA\u0800-\u082D\u0840-\u085B\u08A0\u08A2-\u08AC\u08E4-\u08FE\u0900-\u0963\u0966-\u096F\u0971-\u0977\u0979-\u097F\u0981-\u0983\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BC-\u09C4\u09C7\u09C8\u09CB-\u09CE\u09D7\u09DC\u09DD\u09DF-\u09E3\u09E6-\u09F1\u0A01-\u0A03\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A3C\u0A3E-\u0A42\u0A47\u0A48\u0A4B-\u0A4D\u0A51\u0A59-\u0A5C\u0A5E\u0A66-\u0A75\u0A81-\u0A83\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABC-\u0AC5\u0AC7-\u0AC9\u0ACB-\u0ACD\u0AD0\u0AE0-\u0AE3\u0AE6-\u0AEF\u0B01-\u0B03\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3C-\u0B44\u0B47\u0B48\u0B4B-\u0B4D\u0B56\u0B57\u0B5C\u0B5D\u0B5F-\u0B63\u0B66-\u0B6F\u0B71\u0B82\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BBE-\u0BC2\u0BC6-\u0BC8\u0BCA-\u0BCD\u0BD0\u0BD7\u0BE6-\u0BEF\u0C01-\u0C03\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C33\u0C35-\u0C39\u0C3D-\u0C44\u0C46-\u0C48\u0C4A-\u0C4D\u0C55\u0C56\u0C58\u0C59\u0C60-\u0C63\u0C66-\u0C6F\u0C82\u0C83\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBC-\u0CC4\u0CC6-\u0CC8\u0CCA-\u0CCD\u0CD5\u0CD6\u0CDE\u0CE0-\u0CE3\u0CE6-\u0CEF\u0CF1\u0CF2\u0D02\u0D03\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D-\u0D44\u0D46-\u0D48\u0D4A-\u0D4E\u0D57\u0D60-\u0D63\u0D66-\u0D6F\u0D7A-\u0D7F\u0D82\u0D83\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0DCA\u0DCF-\u0DD4\u0DD6\u0DD8-\u0DDF\u0DF2\u0DF3\u0E01-\u0E3A\u0E40-\u0E4E\u0E50-\u0E59\u0E81\u0E82\u0E84\u0E87\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA\u0EAB\u0EAD-\u0EB9\u0EBB-\u0EBD\u0EC0-\u0EC4\u0EC6\u0EC8-\u0ECD\u0ED0-\u0ED9\u0EDC-\u0EDF\u0F00\u0F18\u0F19\u0F20-\u0F29\u0F35\u0F37\u0F39\u0F3E-\u0F47\u0F49-\u0F6C\u0F71-\u0F84\u0F86-\u0F97\u0F99-\u0FBC\u0FC6\u1000-\u1049\u1050-\u109D\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u135D-\u135F\u1380-\u138F\u13A0-\u13F4\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F0\u1700-\u170C\u170E-\u1714\u1720-\u1734\u1740-\u1753\u1760-\u176C\u176E-\u1770\u1772\u1773\u1780-\u17D3\u17D7\u17DC\u17DD\u17E0-\u17E9\u180B-\u180D\u1810-\u1819\u1820-\u1877\u1880-\u18AA\u18B0-\u18F5\u1900-\u191C\u1920-\u192B\u1930-\u193B\u1946-\u196D\u1970-\u1974\u1980-\u19AB\u19B0-\u19C9\u19D0-\u19D9\u1A00-\u1A1B\u1A20-\u1A5E\u1A60-\u1A7C\u1A7F-\u1A89\u1A90-\u1A99\u1AA7\u1B00-\u1B4B\u1B50-\u1B59\u1B6B-\u1B73\u1B80-\u1BF3\u1C00-\u1C37\u1C40-\u1C49\u1C4D-\u1C7D\u1CD0-\u1CD2\u1CD4-\u1CF6\u1D00-\u1DE6\u1DFC-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u200C\u200D\u203F\u2040\u2054\u2071\u207F\u2090-\u209C\u20D0-\u20DC\u20E1\u20E5-\u20F0\u2102\u2107\u210A-\u2113\u2115\u2119-\u211D\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2160-\u2188\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2CE4\u2CEB-\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D7F-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2DE0-\u2DFF\u2E2F\u3005-\u3007\u3021-\u302F\u3031-\u3035\u3038-\u303C\u3041-\u3096\u3099\u309A\u309D-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31BA\u31F0-\u31FF\u3400-\u4DB5\u4E00-\u9FCC\uA000-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA62B\uA640-\uA66F\uA674-\uA67D\uA67F-\uA697\uA69F-\uA6F1\uA717-\uA71F\uA722-\uA788\uA78B-\uA78E\uA790-\uA793\uA7A0-\uA7AA\uA7F8-\uA827\uA840-\uA873\uA880-\uA8C4\uA8D0-\uA8D9\uA8E0-\uA8F7\uA8FB\uA900-\uA92D\uA930-\uA953\uA960-\uA97C\uA980-\uA9C0\uA9CF-\uA9D9\uAA00-\uAA36\uAA40-\uAA4D\uAA50-\uAA59\uAA60-\uAA76\uAA7A\uAA7B\uAA80-\uAAC2\uAADB-\uAADD\uAAE0-\uAAEF\uAAF2-\uAAF6\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uABC0-\uABEA\uABEC\uABED\uABF0-\uABF9\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE00-\uFE0F\uFE20-\uFE26\uFE33\uFE34\uFE4D-\uFE4F\uFE70-\uFE74\uFE76-\uFEFC\uFF10-\uFF19\uFF21-\uFF3A\uFF3F\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]/
 
-},{}],119:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 'use strict';
 
 
@@ -38211,7 +31332,7 @@ var yaml = require('./lib/js-yaml.js');
 
 module.exports = yaml;
 
-},{"./lib/js-yaml.js":120}],120:[function(require,module,exports){
+},{"./lib/js-yaml.js":113}],113:[function(require,module,exports){
 'use strict';
 
 
@@ -38252,7 +31373,7 @@ module.exports.parse          = deprecated('parse');
 module.exports.compose        = deprecated('compose');
 module.exports.addConstructor = deprecated('addConstructor');
 
-},{"./js-yaml/dumper":122,"./js-yaml/exception":123,"./js-yaml/loader":124,"./js-yaml/schema":126,"./js-yaml/schema/core":127,"./js-yaml/schema/default_full":128,"./js-yaml/schema/default_safe":129,"./js-yaml/schema/failsafe":130,"./js-yaml/schema/json":131,"./js-yaml/type":132}],121:[function(require,module,exports){
+},{"./js-yaml/dumper":115,"./js-yaml/exception":116,"./js-yaml/loader":117,"./js-yaml/schema":119,"./js-yaml/schema/core":120,"./js-yaml/schema/default_full":121,"./js-yaml/schema/default_safe":122,"./js-yaml/schema/failsafe":123,"./js-yaml/schema/json":124,"./js-yaml/type":125}],114:[function(require,module,exports){
 'use strict';
 
 
@@ -38313,7 +31434,7 @@ module.exports.repeat         = repeat;
 module.exports.isNegativeZero = isNegativeZero;
 module.exports.extend         = extend;
 
-},{}],122:[function(require,module,exports){
+},{}],115:[function(require,module,exports){
 'use strict';
 
 /*eslint-disable no-use-before-define*/
@@ -39134,7 +32255,7 @@ function safeDump(input, options) {
 module.exports.dump     = dump;
 module.exports.safeDump = safeDump;
 
-},{"./common":121,"./exception":123,"./schema/default_full":128,"./schema/default_safe":129}],123:[function(require,module,exports){
+},{"./common":114,"./exception":116,"./schema/default_full":121,"./schema/default_safe":122}],116:[function(require,module,exports){
 // YAML error class. http://stackoverflow.com/questions/8458984
 //
 'use strict';
@@ -39179,7 +32300,7 @@ YAMLException.prototype.toString = function toString(compact) {
 
 module.exports = YAMLException;
 
-},{}],124:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 'use strict';
 
 /*eslint-disable max-len,no-use-before-define*/
@@ -40779,7 +33900,7 @@ module.exports.load        = load;
 module.exports.safeLoadAll = safeLoadAll;
 module.exports.safeLoad    = safeLoad;
 
-},{"./common":121,"./exception":123,"./mark":125,"./schema/default_full":128,"./schema/default_safe":129}],125:[function(require,module,exports){
+},{"./common":114,"./exception":116,"./mark":118,"./schema/default_full":121,"./schema/default_safe":122}],118:[function(require,module,exports){
 'use strict';
 
 
@@ -40857,7 +33978,7 @@ Mark.prototype.toString = function toString(compact) {
 
 module.exports = Mark;
 
-},{"./common":121}],126:[function(require,module,exports){
+},{"./common":114}],119:[function(require,module,exports){
 'use strict';
 
 /*eslint-disable max-len*/
@@ -40967,7 +34088,7 @@ Schema.create = function createSchema() {
 
 module.exports = Schema;
 
-},{"./common":121,"./exception":123,"./type":132}],127:[function(require,module,exports){
+},{"./common":114,"./exception":116,"./type":125}],120:[function(require,module,exports){
 // Standard YAML's Core schema.
 // http://www.yaml.org/spec/1.2/spec.html#id2804923
 //
@@ -40987,7 +34108,7 @@ module.exports = new Schema({
   ]
 });
 
-},{"../schema":126,"./json":131}],128:[function(require,module,exports){
+},{"../schema":119,"./json":124}],121:[function(require,module,exports){
 // JS-YAML's default schema for `load` function.
 // It is not described in the YAML specification.
 //
@@ -41014,7 +34135,7 @@ module.exports = Schema.DEFAULT = new Schema({
   ]
 });
 
-},{"../schema":126,"../type/js/function":137,"../type/js/regexp":138,"../type/js/undefined":139,"./default_safe":129}],129:[function(require,module,exports){
+},{"../schema":119,"../type/js/function":130,"../type/js/regexp":131,"../type/js/undefined":132,"./default_safe":122}],122:[function(require,module,exports){
 // JS-YAML's default schema for `safeLoad` function.
 // It is not described in the YAML specification.
 //
@@ -41044,7 +34165,7 @@ module.exports = new Schema({
   ]
 });
 
-},{"../schema":126,"../type/binary":133,"../type/merge":141,"../type/omap":143,"../type/pairs":144,"../type/set":146,"../type/timestamp":148,"./core":127}],130:[function(require,module,exports){
+},{"../schema":119,"../type/binary":126,"../type/merge":134,"../type/omap":136,"../type/pairs":137,"../type/set":139,"../type/timestamp":141,"./core":120}],123:[function(require,module,exports){
 // Standard YAML's Failsafe schema.
 // http://www.yaml.org/spec/1.2/spec.html#id2802346
 
@@ -41063,7 +34184,7 @@ module.exports = new Schema({
   ]
 });
 
-},{"../schema":126,"../type/map":140,"../type/seq":145,"../type/str":147}],131:[function(require,module,exports){
+},{"../schema":119,"../type/map":133,"../type/seq":138,"../type/str":140}],124:[function(require,module,exports){
 // Standard YAML's JSON schema.
 // http://www.yaml.org/spec/1.2/spec.html#id2803231
 //
@@ -41090,7 +34211,7 @@ module.exports = new Schema({
   ]
 });
 
-},{"../schema":126,"../type/bool":134,"../type/float":135,"../type/int":136,"../type/null":142,"./failsafe":130}],132:[function(require,module,exports){
+},{"../schema":119,"../type/bool":127,"../type/float":128,"../type/int":129,"../type/null":135,"./failsafe":123}],125:[function(require,module,exports){
 'use strict';
 
 var YAMLException = require('./exception');
@@ -41153,7 +34274,7 @@ function Type(tag, options) {
 
 module.exports = Type;
 
-},{"./exception":123}],133:[function(require,module,exports){
+},{"./exception":116}],126:[function(require,module,exports){
 'use strict';
 
 /*eslint-disable no-bitwise*/
@@ -41293,7 +34414,7 @@ module.exports = new Type('tag:yaml.org,2002:binary', {
   represent: representYamlBinary
 });
 
-},{"../type":132}],134:[function(require,module,exports){
+},{"../type":125}],127:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -41330,7 +34451,7 @@ module.exports = new Type('tag:yaml.org,2002:bool', {
   defaultStyle: 'lowercase'
 });
 
-},{"../type":132}],135:[function(require,module,exports){
+},{"../type":125}],128:[function(require,module,exports){
 'use strict';
 
 var common = require('../common');
@@ -41448,7 +34569,7 @@ module.exports = new Type('tag:yaml.org,2002:float', {
   defaultStyle: 'lowercase'
 });
 
-},{"../common":121,"../type":132}],136:[function(require,module,exports){
+},{"../common":114,"../type":125}],129:[function(require,module,exports){
 'use strict';
 
 var common = require('../common');
@@ -41622,7 +34743,7 @@ module.exports = new Type('tag:yaml.org,2002:int', {
   }
 });
 
-},{"../common":121,"../type":132}],137:[function(require,module,exports){
+},{"../common":114,"../type":125}],130:[function(require,module,exports){
 'use strict';
 
 var esprima;
@@ -41708,7 +34829,7 @@ module.exports = new Type('tag:yaml.org,2002:js/function', {
   represent: representJavascriptFunction
 });
 
-},{"../../type":132}],138:[function(require,module,exports){
+},{"../../type":125}],131:[function(require,module,exports){
 'use strict';
 
 var Type = require('../../type');
@@ -41770,7 +34891,7 @@ module.exports = new Type('tag:yaml.org,2002:js/regexp', {
   represent: representJavascriptRegExp
 });
 
-},{"../../type":132}],139:[function(require,module,exports){
+},{"../../type":125}],132:[function(require,module,exports){
 'use strict';
 
 var Type = require('../../type');
@@ -41800,7 +34921,7 @@ module.exports = new Type('tag:yaml.org,2002:js/undefined', {
   represent: representJavascriptUndefined
 });
 
-},{"../../type":132}],140:[function(require,module,exports){
+},{"../../type":125}],133:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -41810,7 +34931,7 @@ module.exports = new Type('tag:yaml.org,2002:map', {
   construct: function (data) { return data !== null ? data : {}; }
 });
 
-},{"../type":132}],141:[function(require,module,exports){
+},{"../type":125}],134:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -41824,7 +34945,7 @@ module.exports = new Type('tag:yaml.org,2002:merge', {
   resolve: resolveYamlMerge
 });
 
-},{"../type":132}],142:[function(require,module,exports){
+},{"../type":125}],135:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -41860,7 +34981,7 @@ module.exports = new Type('tag:yaml.org,2002:null', {
   defaultStyle: 'lowercase'
 });
 
-},{"../type":132}],143:[function(require,module,exports){
+},{"../type":125}],136:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -41906,7 +35027,7 @@ module.exports = new Type('tag:yaml.org,2002:omap', {
   construct: constructYamlOmap
 });
 
-},{"../type":132}],144:[function(require,module,exports){
+},{"../type":125}],137:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -41961,7 +35082,7 @@ module.exports = new Type('tag:yaml.org,2002:pairs', {
   construct: constructYamlPairs
 });
 
-},{"../type":132}],145:[function(require,module,exports){
+},{"../type":125}],138:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -41971,7 +35092,7 @@ module.exports = new Type('tag:yaml.org,2002:seq', {
   construct: function (data) { return data !== null ? data : []; }
 });
 
-},{"../type":132}],146:[function(require,module,exports){
+},{"../type":125}],139:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -42002,7 +35123,7 @@ module.exports = new Type('tag:yaml.org,2002:set', {
   construct: constructYamlSet
 });
 
-},{"../type":132}],147:[function(require,module,exports){
+},{"../type":125}],140:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -42012,7 +35133,7 @@ module.exports = new Type('tag:yaml.org,2002:str', {
   construct: function (data) { return data !== null ? data : ''; }
 });
 
-},{"../type":132}],148:[function(require,module,exports){
+},{"../type":125}],141:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -42102,193 +35223,7 @@ module.exports = new Type('tag:yaml.org,2002:timestamp', {
   represent: representYamlTimestamp
 });
 
-},{"../type":132}],149:[function(require,module,exports){
-/*
- * JSFace Object Oriented Programming Library
- * https://github.com/tnhu/jsface
- *
- * Copyright (c) 2009-2013 Tan Nhu
- * Licensed under MIT license (https://github.com/tnhu/jsface/blob/master/LICENSE.txt)
- */
-(function(context, OBJECT, NUMBER, LENGTH, toString, undefined, oldClass, jsface) {
-  /**
-   * Return a map itself or null. A map is a set of { key: value }
-   * @param obj object to be checked
-   * @return obj itself as a map or false
-   */
-  function mapOrNil(obj) { return (obj && typeof obj === OBJECT && !(typeof obj.length === NUMBER && !(obj.propertyIsEnumerable(LENGTH))) && obj) || null; }
-
-  /**
-   * Return an array itself or null
-   * @param obj object to be checked
-   * @return obj itself as an array or null
-   */
-  function arrayOrNil(obj) { return (obj && typeof obj === OBJECT && typeof obj.length === NUMBER && !(obj.propertyIsEnumerable(LENGTH)) && obj) || null; }
-
-  /**
-   * Return a function itself or null
-   * @param obj object to be checked
-   * @return obj itself as a function or null
-   */
-  function functionOrNil(obj) { return (obj && typeof obj === "function" && obj) || null; }
-
-  /**
-   * Return a string itself or null
-   * @param obj object to be checked
-   * @return obj itself as a string or null
-   */
-  function stringOrNil(obj) { return (toString.apply(obj) === "[object String]" && obj) || null; }
-
-  /**
-   * Return a class itself or null
-   * @param obj object to be checked
-   * @return obj itself as a class or false
-   */
-  function classOrNil(obj) { return (functionOrNil(obj) && (obj.prototype && obj === obj.prototype.constructor) && obj) || null; }
-
-  /**
-   * Util for extend() to copy a map of { key:value } to an object
-   * @param key key
-   * @param value value
-   * @param ignoredKeys ignored keys
-   * @param object object
-   * @param iClass true if object is a class
-   * @param oPrototype object prototype
-   */
-  function copier(key, value, ignoredKeys, object, iClass, oPrototype) {
-    if ( !ignoredKeys || !ignoredKeys.hasOwnProperty(key)) {
-      object[key] = value;
-      if (iClass) { oPrototype[key] = value; }                       // class? copy to prototype as well
-    }
-  }
-
-  /**
-   * Extend object from subject, ignore properties in ignoredKeys
-   * @param object the child
-   * @param subject the parent
-   * @param ignoredKeys (optional) keys should not be copied to child
-   */
-  function extend(object, subject, ignoredKeys) {
-    if (arrayOrNil(subject)) {
-      for (var len = subject.length; --len >= 0;) { extend(object, subject[len], ignoredKeys); }
-    } else {
-      ignoredKeys = ignoredKeys || { constructor: 1, $super: 1, prototype: 1, $superp: 1 };
-
-      var iClass     = classOrNil(object),
-          isSubClass = classOrNil(subject),
-          oPrototype = object.prototype, supez, key, proto;
-
-      // copy static properties and prototype.* to object
-      if (mapOrNil(subject)) {
-        for (key in subject) {
-          copier(key, subject[key], ignoredKeys, object, iClass, oPrototype);
-        }
-      }
-
-      if (isSubClass) {
-        proto = subject.prototype;
-        for (key in proto) {
-          copier(key, proto[key], ignoredKeys, object, iClass, oPrototype);
-        }
-      }
-
-      // prototype properties
-      if (iClass && isSubClass) { extend(oPrototype, subject.prototype, ignoredKeys); }
-    }
-  }
-
-  /**
-   * Create a class.
-   * @param parent parent class(es)
-   * @param api class api
-   * @return class
-   */
-  function Class(parent, api) {
-    if ( !api) {
-      parent = (api = parent, 0);                                     // !api means there's no parent
-    }
-
-    var clazz, constructor, singleton, statics, key, bindTo, len, i = 0, p,
-        ignoredKeys = { constructor: 1, $singleton: 1, $statics: 1, prototype: 1, $super: 1, $superp: 1, main: 1, toString: 0 },
-        plugins     = Class.plugins;
-
-    api         = (typeof api === "function" ? api() : api) || {};             // execute api if it's a function
-    constructor = api.hasOwnProperty("constructor") ? api.constructor : 0;     // hasOwnProperty is a must, constructor is special
-    singleton   = api.$singleton;
-    statics     = api.$statics;
-
-    // add plugins' keys into ignoredKeys
-    for (key in plugins) { ignoredKeys[key] = 1; }
-
-    // construct constructor
-    clazz  = singleton ? {} : (constructor ? constructor : function(){});
-
-    // determine bindTo: where api should be bound
-    bindTo = singleton ? clazz : clazz.prototype;
-
-    // make sure parent is always an array
-    parent = !parent || arrayOrNil(parent) ? parent : [ parent ];
-
-    // do inherit
-    len = parent && parent.length;
-    while (i < len) {
-      p = parent[i++];
-      for (key in p) {
-        if ( !ignoredKeys[key]) {
-          bindTo[key] = p[key];
-          if ( !singleton) { clazz[key] = p[key]; }
-        }
-      }
-      for (key in p.prototype) { if ( !ignoredKeys[key]) { bindTo[key] = p.prototype[key]; } }
-    }
-
-    // copy properties from api to bindTo
-    for (key in api) {
-      if ( !ignoredKeys[key]) {
-        bindTo[key] = api[key];
-      }
-    }
-
-    // copy static properties from statics to both clazz and bindTo
-    for (key in statics) { clazz[key] = bindTo[key] = statics[key]; }
-
-    // if class is not a singleton, add $super and $superp
-    if ( !singleton) {
-      p = parent && parent[0] || parent;
-      clazz.$super  = p;
-      clazz.$superp = p && p.prototype ? p.prototype : p;
-      bindTo.$class = clazz;
-    }
-
-    for (key in plugins) { plugins[key](clazz, parent, api); }                 // pass control to plugins
-    if (functionOrNil(api.main)) { api.main.call(clazz, clazz); }              // execute main()
-    return clazz;
-  }
-
-  /* Class plugins repository */
-  Class.plugins = {};
-
-  /* Initialization */
-  jsface = {
-    Class        : Class,
-    extend       : extend,
-    mapOrNil     : mapOrNil,
-    arrayOrNil   : arrayOrNil,
-    functionOrNil: functionOrNil,
-    stringOrNil  : stringOrNil,
-    classOrNil   : classOrNil
-  };
-
-  if (typeof module !== "undefined" && module.exports) {                       // NodeJS/CommonJS
-    module.exports = jsface;
-  } else {
-    oldClass          = context.Class;                                         // save current Class namespace
-    context.Class     = Class;                                                 // bind Class and jsface to global scope
-    context.jsface    = jsface;
-    jsface.noConflict = function() { context.Class = oldClass; };              // no conflict
-  }
-})(this, "object", "number", "length", Object.prototype.toString);
-},{}],150:[function(require,module,exports){
+},{"../type":125}],142:[function(require,module,exports){
 module.exports = require('./lib')
   .extend('chance', function() {
     try {
@@ -42305,7 +35240,7 @@ module.exports = require('./lib')
     }
   });
 
-},{"./lib":151,"chance":16,"faker/lib":68}],151:[function(require,module,exports){
+},{"./lib":143,"chance":10,"faker/lib":61}],143:[function(require,module,exports){
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
 var RandExp = _interopDefault(require('randexp'));
@@ -43367,7 +36302,7 @@ jsf.version = VERSION;
 
 module.exports = jsf;
 
-},{"deref":25,"randexp":262,"tslib":290}],152:[function(require,module,exports){
+},{"deref":18,"randexp":250,"tslib":278}],144:[function(require,module,exports){
 /** !
  * JSON Schema $Ref Parser v3.3.1
  *
@@ -43574,7 +36509,7 @@ function remap(inventory) {
   });
 }
 
-},{"./pointer":161,"./ref":162,"./util/debug":167,"./util/url":170}],153:[function(require,module,exports){
+},{"./pointer":153,"./ref":154,"./util/debug":159,"./util/url":162}],145:[function(require,module,exports){
 'use strict';
 
 var $Ref    = require('./ref'),
@@ -43726,7 +36661,7 @@ function foundCircularReference(keyPath, $refs, options) {
   return true;
 }
 
-},{"./pointer":161,"./ref":162,"./util/debug":167,"./util/url":170,"ono":190}],154:[function(require,module,exports){
+},{"./pointer":153,"./ref":154,"./util/debug":159,"./util/url":162,"ono":182}],146:[function(require,module,exports){
 'use strict';
 
 var Promise         = require('./util/promise'),
@@ -44018,7 +36953,7 @@ function normalizeArgs(args) {
   };
 }
 
-},{"./bundle":152,"./dereference":153,"./options":155,"./parse":156,"./refs":163,"./resolve-external":164,"./util/promise":169,"./util/url":170,"./util/yaml":171,"call-me-maybe":15,"ono":190}],155:[function(require,module,exports){
+},{"./bundle":144,"./dereference":145,"./options":147,"./parse":148,"./refs":155,"./resolve-external":156,"./util/promise":161,"./util/url":162,"./util/yaml":163,"call-me-maybe":9,"ono":182}],147:[function(require,module,exports){
 /* eslint lines-around-comment: [2, {beforeBlockComment: false}] */
 'use strict';
 
@@ -44142,7 +37077,7 @@ function isMergeable(val) {
     !(val instanceof Date);
 }
 
-},{"./parsers/binary":157,"./parsers/json":158,"./parsers/text":159,"./parsers/yaml":160,"./resolvers/file":165,"./resolvers/http":166,"./validators/z-schema":172}],156:[function(require,module,exports){
+},{"./parsers/binary":149,"./parsers/json":150,"./parsers/text":151,"./parsers/yaml":152,"./resolvers/file":157,"./resolvers/http":158,"./validators/z-schema":164}],148:[function(require,module,exports){
 'use strict';
 
 var ono      = require('ono'),
@@ -44294,7 +37229,7 @@ function isEmpty(value) {
     (Buffer.isBuffer(value) && value.length === 0);
 }
 
-},{"./util/debug":167,"./util/plugins":168,"./util/promise":169,"./util/url":170,"ono":190}],157:[function(require,module,exports){
+},{"./util/debug":159,"./util/plugins":160,"./util/promise":161,"./util/url":162,"ono":182}],149:[function(require,module,exports){
 'use strict';
 
 var BINARY_REGEXP = /\.(jpeg|jpg|gif|png|bmp|ico)$/i;
@@ -44351,7 +37286,7 @@ module.exports = {
   }
 };
 
-},{}],158:[function(require,module,exports){
+},{}],150:[function(require,module,exports){
 'use strict';
 
 var Promise = require('../util/promise');
@@ -44413,7 +37348,7 @@ module.exports = {
   }
 };
 
-},{"../util/promise":169}],159:[function(require,module,exports){
+},{"../util/promise":161}],151:[function(require,module,exports){
 'use strict';
 
 var TEXT_REGEXP = /\.(txt|htm|html|md|xml|js|min|map|css|scss|less|svg)$/i;
@@ -44479,7 +37414,7 @@ module.exports = {
   }
 };
 
-},{}],160:[function(require,module,exports){
+},{}],152:[function(require,module,exports){
 'use strict';
 
 var Promise = require('../util/promise'),
@@ -44537,7 +37472,7 @@ module.exports = {
   }
 };
 
-},{"../util/promise":169,"../util/yaml":171}],161:[function(require,module,exports){
+},{"../util/promise":161,"../util/yaml":163}],153:[function(require,module,exports){
 'use strict';
 
 module.exports = Pointer;
@@ -44793,7 +37728,7 @@ function setValue(pointer, token, value) {
   return value;
 }
 
-},{"./ref":162,"./util/url":170,"ono":190}],162:[function(require,module,exports){
+},{"./ref":154,"./util/url":162,"ono":182}],154:[function(require,module,exports){
 'use strict';
 
 module.exports = $Ref;
@@ -45026,7 +37961,7 @@ $Ref.dereference = function($ref, resolvedValue) {
   }
 };
 
-},{"./pointer":161}],163:[function(require,module,exports){
+},{"./pointer":153}],155:[function(require,module,exports){
 'use strict';
 
 var ono  = require('ono'),
@@ -45226,7 +38161,7 @@ function getPaths($refs, types) {
   });
 }
 
-},{"./ref":162,"./util/url":170,"ono":190}],164:[function(require,module,exports){
+},{"./ref":154,"./util/url":162,"ono":182}],156:[function(require,module,exports){
 'use strict';
 
 var Promise = require('./util/promise'),
@@ -45341,7 +38276,7 @@ function resolve$Ref($ref, path, $refs, options) {
     });
 }
 
-},{"./parse":156,"./pointer":161,"./ref":162,"./util/debug":167,"./util/promise":169,"./util/url":170}],165:[function(require,module,exports){
+},{"./parse":148,"./pointer":153,"./ref":154,"./util/debug":159,"./util/promise":161,"./util/url":162}],157:[function(require,module,exports){
 'use strict';
 var fs      = require('fs'),
     ono     = require('ono'),
@@ -45408,7 +38343,7 @@ module.exports = {
   }
 };
 
-},{"../util/debug":167,"../util/promise":169,"../util/url":170,"fs":undefined,"ono":190}],166:[function(require,module,exports){
+},{"../util/debug":159,"../util/promise":161,"../util/url":162,"fs":undefined,"ono":182}],158:[function(require,module,exports){
 'use strict';
 
 var http    = require('http'),
@@ -45590,7 +38525,7 @@ function get(u, httpOptions) {
   });
 }
 
-},{"../util/debug":167,"../util/promise":169,"../util/url":170,"http":undefined,"https":undefined,"ono":190}],167:[function(require,module,exports){
+},{"../util/debug":159,"../util/promise":161,"../util/url":162,"http":undefined,"https":undefined,"ono":182}],159:[function(require,module,exports){
 'use strict';
 
 var debug = require('debug');
@@ -45602,7 +38537,7 @@ var debug = require('debug');
  */
 module.exports = debug('json-schema-ref-parser');
 
-},{"debug":22}],168:[function(require,module,exports){
+},{"debug":15}],160:[function(require,module,exports){
 'use strict';
 
 var Promise = require('./promise'),
@@ -45761,13 +38696,13 @@ function getResult(obj, prop, file, callback) {
   return value;
 }
 
-},{"./debug":167,"./promise":169}],169:[function(require,module,exports){
+},{"./debug":159,"./promise":161}],161:[function(require,module,exports){
 'use strict';
 
 /** @type {Promise} **/
 module.exports = typeof Promise === 'function' ? Promise : require('es6-promise').Promise;
 
-},{"es6-promise":55}],170:[function(require,module,exports){
+},{"es6-promise":48}],162:[function(require,module,exports){
 'use strict';
 
 var isWindows           = /^win/.test(process.platform),
@@ -45981,7 +38916,7 @@ exports.toFileSystemPath = function toFileSystemPath(path, keepFileProtocol) {
   return path;
 };
 
-},{"url":undefined}],171:[function(require,module,exports){
+},{"url":undefined}],163:[function(require,module,exports){
 /* eslint lines-around-comment: [2, {beforeBlockComment: false}] */
 'use strict';
 
@@ -46039,7 +38974,7 @@ module.exports = {
   }
 };
 
-},{"js-yaml":119,"ono":190}],172:[function(require,module,exports){
+},{"js-yaml":112,"ono":182}],164:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -46098,10 +39033,10 @@ module.exports = {
   }
 };
 
-},{}],173:[function(require,module,exports){
+},{}],165:[function(require,module,exports){
 module.exports = require('./lib');
 
-},{"./lib":175}],174:[function(require,module,exports){
+},{"./lib":167}],166:[function(require,module,exports){
 var bomb = {
     /**
      * @private
@@ -46168,7 +39103,7 @@ var bomb = {
 
 module.exports = bomb;
 
-},{}],175:[function(require,module,exports){
+},{}],167:[function(require,module,exports){
 /**!
  * Originally written by:
  * https://github.com/sindresorhus/parse-json
@@ -46248,7 +39183,7 @@ module.exports = {
     }
 };
 
-},{"../vendor/parse":176,"./bomb":174}],176:[function(require,module,exports){
+},{"../vendor/parse":168,"./bomb":166}],168:[function(require,module,exports){
 /*
  * Author: Alex Kocharin <alex@kocharin.ru>
  * GIT: https://github.com/rlidwka/jju
@@ -47001,9 +39936,9 @@ module.exports.tokenize = function tokenizeJSON(input, options) {
   return tokens
 }
 
-},{"./unicode":177}],177:[function(require,module,exports){
-arguments[4][118][0].apply(exports,arguments)
-},{"dup":118}],178:[function(require,module,exports){
+},{"./unicode":169}],169:[function(require,module,exports){
+arguments[4][111][0].apply(exports,arguments)
+},{"dup":111}],170:[function(require,module,exports){
 /**
  * lodash (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -47171,7 +40106,7 @@ function escapeRegExp(string) {
 
 module.exports = escapeRegExp;
 
-},{}],179:[function(require,module,exports){
+},{}],171:[function(require,module,exports){
 /**
  * @license
  * lodash 3.10.0 (Custom Build) <https://lodash.com/>
@@ -59524,7 +52459,7 @@ module.exports = escapeRegExp;
   }
 }.call(this));
 
-},{}],180:[function(require,module,exports){
+},{}],172:[function(require,module,exports){
 'use strict';
 module.exports = function (obj) {
 	var ret = {};
@@ -59537,7 +52472,7 @@ module.exports = function (obj) {
 	return ret;
 };
 
-},{}],181:[function(require,module,exports){
+},{}],173:[function(require,module,exports){
 module.exports={
   "application/1d-interleaved-parityfec": {
     "source": "iana"
@@ -66505,7 +59440,7 @@ module.exports={
   }
 }
 
-},{}],182:[function(require,module,exports){
+},{}],174:[function(require,module,exports){
 /*!
  * mime-db
  * Copyright(c) 2014 Jonathan Ong
@@ -66518,7 +59453,7 @@ module.exports={
 
 module.exports = require('./db.json')
 
-},{"./db.json":181}],183:[function(require,module,exports){
+},{"./db.json":173}],175:[function(require,module,exports){
 module.exports={
     "application/x-www-form-urlencoded": {
         "type": "text",
@@ -68290,7 +61225,7 @@ module.exports={
     }
 }
 
-},{}],184:[function(require,module,exports){
+},{}],176:[function(require,module,exports){
 var /**
      * @private
      * @type {Object}
@@ -68447,7 +61382,7 @@ module.exports = {
     }
 };
 
-},{"./db.json":183,"charset":17}],185:[function(require,module,exports){
+},{"./db.json":175,"charset":11}],177:[function(require,module,exports){
 /*!
  * mime-types
  * Copyright(c) 2014 Jonathan Ong
@@ -68637,7 +61572,7 @@ function populateMaps (extensions, types) {
   })
 }
 
-},{"mime-db":182,"path":undefined}],186:[function(require,module,exports){
+},{"mime-db":174,"path":undefined}],178:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -68791,13 +61726,13 @@ function plural(ms, n, name) {
   return Math.ceil(ms / n) + ' ' + name + 's';
 }
 
-},{}],187:[function(require,module,exports){
+},{}],179:[function(require,module,exports){
 'use strict';
 module.exports = Number.isNaN || function (x) {
 	return x !== x;
 };
 
-},{}],188:[function(require,module,exports){
+},{}],180:[function(require,module,exports){
 /*
 object-assign
 (c) Sindre Sorhus
@@ -68889,7 +61824,7 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
-},{}],189:[function(require,module,exports){
+},{}],181:[function(require,module,exports){
 var wrappy = require('wrappy')
 module.exports = wrappy(once)
 module.exports.strict = wrappy(onceStrict)
@@ -68933,7 +61868,7 @@ function onceStrict (fn) {
   return f
 }
 
-},{"wrappy":293}],190:[function(require,module,exports){
+},{"wrappy":281}],182:[function(require,module,exports){
 'use strict';
 
 var format = require('format-util');
@@ -69236,7 +62171,7 @@ function lazyPopStack (error) {
   });
 }
 
-},{"format-util":78}],191:[function(require,module,exports){
+},{"format-util":71}],183:[function(require,module,exports){
 /* global define */
 
 (function (root, pluralize) {
@@ -69670,7 +62605,7 @@ function lazyPopStack (error) {
   return pluralize;
 });
 
-},{}],192:[function(require,module,exports){
+},{}],184:[function(require,module,exports){
 /**!
  * @license http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -69692,7 +62627,7 @@ function lazyPopStack (error) {
 module.exports = require('./lib/index');
 
 
-},{"./lib/index":222}],193:[function(require,module,exports){
+},{"./lib/index":214}],185:[function(require,module,exports){
 var _ = require('../util').lodash,
     PropertyList = require('./property-list').PropertyList,
     Url = require('./url').Url,
@@ -69777,7 +62712,7 @@ module.exports = {
     CertificateList: CertificateList
 };
 
-},{"../util":226,"./certificate":194,"./property-list":207,"./url":217}],194:[function(require,module,exports){
+},{"../util":218,"./certificate":186,"./property-list":199,"./url":209}],186:[function(require,module,exports){
 var _ = require('../util').lodash,
     Property = require('./property').Property,
     PropertyBase = require('./property-base').PropertyBase,
@@ -69969,7 +62904,7 @@ module.exports = {
     Certificate: Certificate
 };
 
-},{"../url-pattern/url-match-pattern-list":224,"../util":226,"./property":208,"./property-base":206,"./url":217}],195:[function(require,module,exports){
+},{"../url-pattern/url-match-pattern-list":216,"../util":218,"./property":200,"./property-base":198,"./url":209}],187:[function(require,module,exports){
 var _ = require('../util').lodash,
     ItemGroup = require('./item-group').ItemGroup,
     VariableList = require('./variable-list').VariableList,
@@ -70206,7 +63141,7 @@ module.exports = {
     Collection: Collection
 };
 
-},{"../util":226,"./item-group":204,"./variable-list":218,"./version":221}],196:[function(require,module,exports){
+},{"../util":218,"./item-group":196,"./variable-list":210,"./version":213}],188:[function(require,module,exports){
 var _ = require('../util').lodash,
     PropertyList = require('./property-list').PropertyList,
     Cookie = require('./cookie').Cookie,
@@ -70256,7 +63191,7 @@ module.exports = {
     CookieList: CookieList
 };
 
-},{"../util":226,"./cookie":197,"./property-list":207}],197:[function(require,module,exports){
+},{"../util":218,"./cookie":189,"./property-list":199}],189:[function(require,module,exports){
 var _ = require('../util').lodash,
     PropertyBase = require('./property-base').PropertyBase,
 
@@ -70567,7 +63502,7 @@ module.exports = {
     Cookie: Cookie
 };
 
-},{"../util":226,"./property-base":206}],198:[function(require,module,exports){
+},{"../util":218,"./property-base":198}],190:[function(require,module,exports){
 var _ = require('../util').lodash,
     marked = require('8fold-marked'),
     sanitizeHtml = require('sanitize-html'),
@@ -70759,7 +63694,7 @@ module.exports = {
     Description: Description
 };
 
-},{"../util":226,"8fold-marked":6,"escape-html":56,"sanitize-html":281}],199:[function(require,module,exports){
+},{"../util":218,"8fold-marked":6,"escape-html":49,"sanitize-html":269}],191:[function(require,module,exports){
 var _ = require('../util').lodash,
     PropertyList = require('./property-list').PropertyList,
     Event = require('./event').Event,
@@ -70850,7 +63785,7 @@ module.exports = {
     EventList: EventList
 };
 
-},{"../util":226,"./event":200,"./property-list":207}],200:[function(require,module,exports){
+},{"../util":218,"./event":192,"./property-list":199}],192:[function(require,module,exports){
 var _ = require('../util').lodash,
     Property = require('./property').Property,
     Script = require('./script').Script,
@@ -70944,7 +63879,7 @@ module.exports = {
     Event: Event
 };
 
-},{"../util":226,"./property":208,"./script":216}],201:[function(require,module,exports){
+},{"../util":218,"./property":200,"./script":208}],193:[function(require,module,exports){
 var _ = require('../util').lodash,
     Property = require('./property').Property,
 
@@ -71029,7 +63964,7 @@ module.exports = {
     FormParam: FormParam
 };
 
-},{"../util":226,"./property":208}],202:[function(require,module,exports){
+},{"../util":218,"./property":200}],194:[function(require,module,exports){
 var _ = require('../util').lodash,
     PropertyList = require('./property-list').PropertyList,
     Header = require('./header').Header,
@@ -71096,7 +64031,7 @@ module.exports = {
     HeaderList: HeaderList
 };
 
-},{"../util":226,"./header":203,"./property-list":207}],203:[function(require,module,exports){
+},{"../util":218,"./header":195,"./property-list":199}],195:[function(require,module,exports){
 var util = require('../util'),
     _ = util.lodash,
 
@@ -71371,7 +64306,7 @@ module.exports = {
     Header: Header
 };
 
-},{"../util":226,"./property":208,"./property-list":207}],204:[function(require,module,exports){
+},{"../util":218,"./property":200,"./property-list":199}],196:[function(require,module,exports){
 var _ = require('../util').lodash,
     Property = require('./property').Property,
     PropertyList = require('./property-list').PropertyList,
@@ -71650,7 +64585,7 @@ module.exports = {
     ItemGroup: ItemGroup
 };
 
-},{"../util":226,"./event-list":199,"./item":205,"./property":208,"./property-list":207,"./request":214,"./request-auth":212}],205:[function(require,module,exports){
+},{"../util":218,"./event-list":191,"./item":197,"./property":200,"./property-list":199,"./request":206,"./request-auth":204}],197:[function(require,module,exports){
 var _ = require('../util').lodash,
     Property = require('./property').Property,
     PropertyList = require('./property-list').PropertyList,
@@ -71886,7 +64821,7 @@ module.exports = {
     Item: Item
 };
 
-},{"../util":226,"./event-list":199,"./property":208,"./property-list":207,"./request":214,"./request-auth":212,"./response":215}],206:[function(require,module,exports){
+},{"../util":218,"./event-list":191,"./property":200,"./property-list":199,"./request":206,"./request-auth":204,"./response":207}],198:[function(require,module,exports){
 var _ = require('../util').lodash,
 
     __PARENT = '__parent',
@@ -72115,7 +65050,7 @@ module.exports = {
     PropertyBase: PropertyBase
 };
 
-},{"../util":226}],207:[function(require,module,exports){
+},{"../util":218}],199:[function(require,module,exports){
 var _ = require('../util').lodash,
     PropertyBase = require('./property-base').PropertyBase,
 
@@ -72787,7 +65722,7 @@ module.exports = {
     PropertyList: PropertyList
 };
 
-},{"../util":226,"./property-base":206}],208:[function(require,module,exports){
+},{"../util":218,"./property-base":198}],200:[function(require,module,exports){
 var _ = require('../util').lodash,
     uuid = require('uuid'),
     PropertyBase = require('./property-base').PropertyBase,
@@ -73051,7 +65986,7 @@ module.exports = {
     Property: Property
 };
 
-},{"../superstring":223,"../util":226,"./description":198,"./property-base":206,"uuid":228}],209:[function(require,module,exports){
+},{"../superstring":215,"../util":218,"./description":190,"./property-base":198,"uuid":220}],201:[function(require,module,exports){
 var _ = require('../util').lodash,
     PropertyList = require('./property-list').PropertyList,
     ProxyConfig = require('./proxy-config').ProxyConfig,
@@ -73129,7 +66064,7 @@ module.exports = {
     ProxyConfigList: ProxyConfigList
 };
 
-},{"../util":226,"./property-list":207,"./proxy-config":210,"./url":217}],210:[function(require,module,exports){
+},{"../util":218,"./property-list":199,"./proxy-config":202,"./url":209}],202:[function(require,module,exports){
 var _ = require('../util').lodash,
     Property = require('./property').Property,
     nodeUrl = require('url'),
@@ -73353,7 +66288,7 @@ module.exports = {
     DEFAULT_PATTERN: DEFAULT_PATTERN
 };
 
-},{"../url-pattern/url-match-pattern":225,"../util":226,"./property":208,"./url":217,"url":undefined}],211:[function(require,module,exports){
+},{"../url-pattern/url-match-pattern":217,"../util":218,"./property":200,"./url":209,"url":undefined}],203:[function(require,module,exports){
 var _ = require('../util').lodash,
     urlEncoder = require('postman-url-encoder'),
 
@@ -73570,7 +66505,7 @@ module.exports = {
     QueryParam: QueryParam
 };
 
-},{"../util":226,"./property":208,"./property-list":207,"postman-url-encoder":233}],212:[function(require,module,exports){
+},{"../util":218,"./property":200,"./property-list":199,"postman-url-encoder":225}],204:[function(require,module,exports){
 var _ = require('../util').lodash,
     Property = require('./property').Property,
     VariableList = require('./variable-list').VariableList,
@@ -73760,7 +66695,7 @@ module.exports = {
     RequestAuth: RequestAuth
 };
 
-},{"../util":226,"./property":208,"./variable-list":218}],213:[function(require,module,exports){
+},{"../util":218,"./property":200,"./variable-list":210}],205:[function(require,module,exports){
 var _ = require('../util').lodash,
     PropertyBase = require('./property-base').PropertyBase,
     PropertyList = require('./property-list').PropertyList,
@@ -73939,7 +66874,7 @@ module.exports = {
     RequestBody: RequestBody
 };
 
-},{"../util":226,"./form-param":201,"./property-base":206,"./property-list":207,"./query-param":211}],214:[function(require,module,exports){
+},{"../util":218,"./form-param":193,"./property-base":198,"./property-list":199,"./query-param":203}],206:[function(require,module,exports){
 var _ = require('../util').lodash,
     PropertyBase = require('./property-base').PropertyBase,
     Property = require('./property').Property,
@@ -74248,7 +67183,7 @@ module.exports = {
     Request: Request
 };
 
-},{"../util":226,"./certificate":194,"./header-list":202,"./property":208,"./property-base":206,"./proxy-config":210,"./request-auth":212,"./request-body":213,"./url":217}],215:[function(require,module,exports){
+},{"../util":218,"./certificate":186,"./header-list":194,"./property":200,"./property-base":198,"./proxy-config":202,"./request-auth":204,"./request-body":205,"./url":209}],207:[function(require,module,exports){
 var util = require('../util'),
     _ = util.lodash,
     fileType = require('file-type'),
@@ -74790,7 +67725,7 @@ module.exports = {
     Response: Response
 };
 
-},{"../util":226,"./cookie-list":196,"./header":203,"./header-list":202,"./property":208,"./property-base":206,"./request":214,"file-type":77,"http-reasons":91,"liquid-json":173,"mime-format":184,"mime-types":185}],216:[function(require,module,exports){
+},{"../util":218,"./cookie-list":188,"./header":195,"./header-list":194,"./property":200,"./property-base":198,"./request":206,"file-type":70,"http-reasons":84,"liquid-json":165,"mime-format":176,"mime-types":177}],208:[function(require,module,exports){
 var _ = require('../util').lodash,
     Property = require('./property').Property,
     Url = require('./url').Url,
@@ -74899,7 +67834,7 @@ module.exports = {
     Script: Script
 };
 
-},{"../util":226,"./property":208,"./url":217}],217:[function(require,module,exports){
+},{"../util":218,"./property":200,"./url":209}],209:[function(require,module,exports){
 var _ = require('../util').lodash,
     PropertyBase = require('./property-base').PropertyBase,
     QueryParam = require('./query-param').QueryParam,
@@ -75321,7 +68256,7 @@ module.exports = {
     Url: Url
 };
 
-},{"../util":226,"./property-base":206,"./property-list":207,"./query-param":211,"./variable-list":218}],218:[function(require,module,exports){
+},{"../util":218,"./property-base":198,"./property-list":199,"./query-param":203,"./variable-list":210}],210:[function(require,module,exports){
 var _ = require('../util').lodash,
     PropertyList = require('./property-list').PropertyList,
     Property = require('./property').Property,
@@ -75485,7 +68420,7 @@ module.exports = {
     VariableList: VariableList
 };
 
-},{"../util":226,"./property":208,"./property-list":207,"./variable":220}],219:[function(require,module,exports){
+},{"../util":218,"./property":200,"./property-list":199,"./variable":212}],211:[function(require,module,exports){
 var _ = require('../util').lodash,
     Property = require('./property').Property,
     PropertyBase = require('./property-base').PropertyBase,
@@ -75805,7 +68740,7 @@ module.exports = {
     VariableScope: VariableScope
 };
 
-},{"../util":226,"./property":208,"./property-base":206,"./variable-list":218}],220:[function(require,module,exports){
+},{"../util":218,"./property":200,"./property-base":198,"./variable-list":210}],212:[function(require,module,exports){
 var _ = require('../util').lodash,
     Property = require('./property').Property,
 
@@ -76120,7 +69055,7 @@ module.exports = {
     Variable: Variable
 };
 
-},{"../util":226,"./property":208}],221:[function(require,module,exports){
+},{"../util":218,"./property":200}],213:[function(require,module,exports){
 var _ = require('../util').lodash,
     semver = require('semver'),
     PropertyBase = require('./property-base').PropertyBase,
@@ -76217,7 +69152,7 @@ module.exports = {
     Version: Version
 };
 
-},{"../util":226,"./property-base":206,"semver":282}],222:[function(require,module,exports){
+},{"../util":218,"./property-base":198,"semver":270}],214:[function(require,module,exports){
 module.exports = {
     PropertyBase: require('./collection/property-base').PropertyBase,
     Certificate: require('./collection/certificate').Certificate,
@@ -76252,7 +69187,7 @@ module.exports = {
     Version: require('./collection/version').Version
 };
 
-},{"./collection/certificate":194,"./collection/certificate-list":193,"./collection/collection":195,"./collection/cookie":197,"./collection/cookie-list":196,"./collection/description":198,"./collection/event":200,"./collection/event-list":199,"./collection/form-param":201,"./collection/header":203,"./collection/header-list":202,"./collection/item":205,"./collection/item-group":204,"./collection/property":208,"./collection/property-base":206,"./collection/property-list":207,"./collection/proxy-config":210,"./collection/proxy-config-list":209,"./collection/query-param":211,"./collection/request":214,"./collection/request-auth":212,"./collection/request-body":213,"./collection/response":215,"./collection/script":216,"./collection/url":217,"./collection/variable":220,"./collection/variable-list":218,"./collection/variable-scope":219,"./collection/version":221,"./url-pattern/url-match-pattern":225,"./url-pattern/url-match-pattern-list":224}],223:[function(require,module,exports){
+},{"./collection/certificate":186,"./collection/certificate-list":185,"./collection/collection":187,"./collection/cookie":189,"./collection/cookie-list":188,"./collection/description":190,"./collection/event":192,"./collection/event-list":191,"./collection/form-param":193,"./collection/header":195,"./collection/header-list":194,"./collection/item":197,"./collection/item-group":196,"./collection/property":200,"./collection/property-base":198,"./collection/property-list":199,"./collection/proxy-config":202,"./collection/proxy-config-list":201,"./collection/query-param":203,"./collection/request":206,"./collection/request-auth":204,"./collection/request-body":205,"./collection/response":207,"./collection/script":208,"./collection/url":209,"./collection/variable":212,"./collection/variable-list":210,"./collection/variable-scope":211,"./collection/version":213,"./url-pattern/url-match-pattern":217,"./url-pattern/url-match-pattern-list":216}],215:[function(require,module,exports){
 var _ = require('../util').lodash,
     uuid = require('uuid'),
     E = '',
@@ -76484,7 +69419,7 @@ module.exports = {
     Substitutor: Substitutor
 };
 
-},{"../util":226,"uuid":228}],224:[function(require,module,exports){
+},{"../util":218,"uuid":220}],216:[function(require,module,exports){
 var _ = require('../util').lodash,
     PropertyList = require('../collection/property-list').PropertyList,
     Url = require('../collection/url').Url,
@@ -76586,7 +69521,7 @@ module.exports = {
     UrlMatchPatternList: UrlMatchPatternList
 };
 
-},{"../collection/property-list":207,"../collection/url":217,"../util":226,"./url-match-pattern":225}],225:[function(require,module,exports){
+},{"../collection/property-list":199,"../collection/url":209,"../util":218,"./url-match-pattern":217}],217:[function(require,module,exports){
 var _ = require('../util').lodash,
     Property = require('../collection/property').Property,
     Url = require('../collection/url').Url,
@@ -76883,7 +69818,7 @@ module.exports = {
     UrlMatchPattern: UrlMatchPattern
 };
 
-},{"../collection/property":208,"../collection/url":217,"../util":226}],226:[function(require,module,exports){
+},{"../collection/property":200,"../collection/url":209,"../util":218}],218:[function(require,module,exports){
 /* global btoa */
 var _ = require('lodash').noConflict(),
     iconvlite = require('iconv-lite'),
@@ -77166,7 +70101,7 @@ util = {
 
 module.exports = util;
 
-},{"iconv-lite":111,"lodash":227}],227:[function(require,module,exports){
+},{"iconv-lite":104,"lodash":219}],219:[function(require,module,exports){
 /**
  * @license
  * Lodash <https://lodash.com/>
@@ -94252,7 +87187,7 @@ module.exports = util;
   }
 }.call(this));
 
-},{}],228:[function(require,module,exports){
+},{}],220:[function(require,module,exports){
 var v1 = require('./v1');
 var v4 = require('./v4');
 
@@ -94262,7 +87197,7 @@ uuid.v4 = v4;
 
 module.exports = uuid;
 
-},{"./v1":231,"./v4":232}],229:[function(require,module,exports){
+},{"./v1":223,"./v4":224}],221:[function(require,module,exports){
 /**
  * Convert array of 16 byte values to UUID string format of the form:
  * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
@@ -94287,7 +87222,7 @@ function bytesToUuid(buf, offset) {
 
 module.exports = bytesToUuid;
 
-},{}],230:[function(require,module,exports){
+},{}],222:[function(require,module,exports){
 // Unique ID creation requires a high quality random # generator.  In node.js
 // this is pretty straight-forward - we use the crypto API.
 
@@ -94299,7 +87234,7 @@ function rng() {
 
 module.exports = rng;
 
-},{"crypto":undefined}],231:[function(require,module,exports){
+},{"crypto":undefined}],223:[function(require,module,exports){
 var rng = require('./lib/rng');
 var bytesToUuid = require('./lib/bytesToUuid');
 
@@ -94401,7 +87336,7 @@ function v1(options, buf, offset) {
 
 module.exports = v1;
 
-},{"./lib/bytesToUuid":229,"./lib/rng":230}],232:[function(require,module,exports){
+},{"./lib/bytesToUuid":221,"./lib/rng":222}],224:[function(require,module,exports){
 var rng = require('./lib/rng');
 var bytesToUuid = require('./lib/bytesToUuid');
 
@@ -94432,7 +87367,7 @@ function v4(options, buf, offset) {
 
 module.exports = v4;
 
-},{"./lib/bytesToUuid":229,"./lib/rng":230}],233:[function(require,module,exports){
+},{"./lib/bytesToUuid":221,"./lib/rng":222}],225:[function(require,module,exports){
 var  /**
      * @private
      * @const
@@ -94507,548 +87442,7 @@ module.exports = {
     }
 };
 
-},{}],234:[function(require,module,exports){
-module.exports={
-    "type":"object",
-    "$schema": "http://json-schema.org/draft-03/schema",
-    "id": "http://jsonschema.net",
-    "title": "Postman collection",
-    "required":false,
-    "extends":[
-        {
-            "required":false
-        },
-        {
-            "required":false
-        }
-    ],
-    "properties":{
-        "id": {
-            "type":"string",
-            "id": "http://jsonschema.net/id",
-            "required":true
-        },
-        "name": {
-            "type":"string",
-            "id": "http://jsonschema.net/name",
-            "required":true
-        },
-        "order": {
-            "type":["array","null"],
-            "id": "http://jsonschema.net/order",
-            "required":false,
-            "items":
-                {
-                    "type":"string",
-                    "id": "http://jsonschema.net/order/0",
-                    "required":true
-                }
-        },
-        "requests": {
-            "type":"array",
-            "id": "http://jsonschema.net/requests",
-            "required":true,
-            "items":
-                {
-                    "type":"object",
-                    "id": "http://jsonschema.net/requests/0",
-                    "required":true,
-                    "properties":{
-                        "collectionId": {
-                            "type":"string",
-                            "id": "http://jsonschema.net/requests/0/collectionId",
-                            "required":true
-                        },
-                        "dataMode": {
-                            "type":"string",
-                            "id": "http://jsonschema.net/requests/0/dataMode",
-                            "required":true
-                        },
-                        "data": {
-                        	"type": ["string","array","null"],
-                            "id": "http://jsonschema.net/requests/0/data",
-                            "required":false
-                        },
-                        "descriptionFormat": {
-                            "type":["string","null"],
-                            "id": "http://jsonschema.net/requests/0/descriptionFormat",
-                            "required":false
-                        },
-                        "description": {
-                            "type":["string","null"],
-                            "id": "http://jsonschema.net/requests/0/description",
-                            "required":false
-                        },
-                        "headers": {
-                            "type":["string","null"],
-                            "id": "http://jsonschema.net/requests/0/headers",
-                            "required":false
-                        },
-                        "id": {
-                            "type":"string",
-                            "id": "http://jsonschema.net/requests/0/id",
-                            "required":true
-                        },
-                        "method": {
-                            "type":"string",
-                            "id": "http://jsonschema.net/requests/0/method",
-                            "required":true
-                        },
-                        "name": {
-                            "type":["string","null"],
-                            "id": "http://jsonschema.net/requests/0/name",
-                            "required":false
-                        },
-                        "pathVariables": {
-                            "type":["object","null"],
-                            "id": "http://jsonschema.net/requests/0/pathVariables",
-                            "required":false
-                        },
-                        "preRequestScript": {
-                            "type":["string","null"],
-                            "id": "http://jsonschema.net/requests/0/preRequestScript",
-                            "required":false
-                        },
-                        "responses": {
-                            "type":["array","null"],
-                            "id": "http://jsonschema.net/requests/0/responses",
-                            "required":false
-                        },
-                        "synced": {
-                            "type":["boolean","null"],
-                            "id": "http://jsonschema.net/requests/0/synced",
-                            "required":false
-                        },
-                        "tests": {
-                            "type":["string","null"],
-                            "id": "http://jsonschema.net/requests/0/tests",
-                            "required":false
-                        },
-                        "time": {
-                            "type":["number","null"],
-                            "id": "http://jsonschema.net/requests/0/time",
-                            "required":false
-                        },
-                        "url": {
-                            "type":"string",
-                            "id": "http://jsonschema.net/requests/0/url",
-                            "required":true
-                        },
-                        "version": {
-                            "type":["number","null"],
-                            "id": "http://jsonschema.net/requests/0/version",
-                            "required":false
-                        }
-                    }
-                }
-            
-
-        },
-        "synced": {
-            "type":["boolean","null"],
-            "id": "http://jsonschema.net/synced",
-            "required":false
-        },
-        "timestamp": {
-            "type":["number","null"],
-            "id": "http://jsonschema.net/timestamp",
-            "required":false
-        }
-    },
-    "items":
-        {
-            "required":false
-        }
-}
-
-},{}],235:[function(require,module,exports){
-module.exports={
-	"type":"object",
-	"$schema": "http://json-schema.org/draft-03/schema",
-	"id": "http://jsonschema.net",
-	"title": "Postman environment",
-	"required":false,
-	"properties":{
-		"id": {
-			"type":"string",
-			"id": "http://jsonschema.net/id",
-			"required":true
-		},
-		"name": {
-			"type":"string",
-			"id": "http://jsonschema.net/name",
-			"required":true
-		},
-		"syncedFilename": {
-			"type":["string","null"],
-			"id": "http://jsonschema.net/syncedFilename",
-			"required":false
-		},
-		"synced": {
-			"type":["boolean","null"],
-			"id": "http://jsonschema.net/synced",
-			"required":false
-		},
-		"timestamp": {
-			"type":["number","null"],
-			"id": "http://jsonschema.net/timestamp",
-			"required":false
-		},
-		"values": {
-			"type":"array",
-			"id": "http://jsonschema.net/values",
-			"required":true,
-			"items":
-				{
-					"type":"object",
-					"id": "http://jsonschema.net/values/0",
-					"required":true,
-					"properties":{
-						"enabled": {
-							"type":["boolean","null"],
-							"id": "http://jsonschema.net/values/0/enabled",
-							"required":false
-						},
-						"key": {
-							"type":"string",
-							"id": "http://jsonschema.net/values/0/key",
-							"required":true
-						},
-						"name": {
-							"type":["string","null"],
-							"id": "http://jsonschema.net/values/0/name",
-							"required":false
-						},
-						"type": {
-							"type":["string","null"],
-							"id": "http://jsonschema.net/values/0/type",
-							"required":false
-						},
-						"value": {
-							"type":"string",
-							"id": "http://jsonschema.net/values/0/value",
-							"required":true
-						}
-					}
-				}
-			
-
-		}
-	}
-}
-
-},{}],236:[function(require,module,exports){
-module.exports={
-  "type":"array",
-  "id": "http://jsonschema.net",
-  "required":false,
-  "title": "Postman globals file",
-  "items":
-    {
-      "anyOf" : [ 
-              { 
-                "type" : "object", 
-                "properties" : { 
-                  "key" : { "type" : "string", "required": true },
-                  "value" : { "type" : "string", "required": true },
-                  "type" : {"type":["string","null"] },
-                  "name" : { "type":["string","null"] },
-                  "enabled" : { "type":["boolean","null"] }
-                }
-          }
-          ]
-        }
-    
-}
-
-},{}],237:[function(require,module,exports){
-/**
-* @Author Abhijit Kane
-* Main validator file
-*/
- 
-var program = require('commander'),
-	fs      = require('fs'),
-	jsface	= require("jsface"),
-	_       = require("lodash"),
-	JSV 	= require("JSV").JSV;
-
-var global_schema = require('./json-schemas/globals.schema.json');
-var env_schema = require('./json-schemas/environment.schema.json');
-var collection_schema = require('./json-schemas/collection.schema.json');
-
-var schemas = {
-	'c': collection_schema,
-	'g': global_schema,
-	'e': env_schema
-};
-
-var postman_validator = jsface.Class({
-	$singleton: true,
-
-	/*
-	return schema:
-	{
-		"status": true / false,
-		"message": "Schema validation failed",
-		"error": {}
-	}*/
-
-	onlyOneValidator: function() {
-		console.err("Only one file can be validated at one time.");
-		process.exit(1);
-	},
-
-	validate: function (schemaCode, input) {
-		try {
-			input = this._loadJSONfile(input);
-			console.log("JSON file loaded");
-			return this.validateJSON(schemaCode,input);
-		}
-		catch(e) {
-			return this._getReturnObj(false, e);
-		}
-	},
-
-
-	/*
-	options is an object
-	currently, the only supported prop is correctDuplicates = true/false
-	If true, duplicate entries in the order arrays in the collection are removed,
-	and the order[] field is added to the old version
-	*/
-	validateJSON: function(schemaCode, input, options) {
-		var schema = schemas[schemaCode];
-		if(typeof schema === "undefined") {
-			console.log("Invalid schema code");
-			return this._getReturnObj(false,"Invalid schema code",{});
-		}
-
-		if(options && options.validateSchema!==false) {
-			var env = JSV.createEnvironment();
-			console.log("Env created");
-			var report = env.validate(input, schema);
-			if(report.errors.length) {
-				console.log("Report errors: " + JSON.stringify(report.errors));
-				return this._getReturnObj(false,"Validation failed",report.errors);
-			}
-		}
-		
-		//schema validation passed
-		//semantic validation only for collections
-		if(schemaCode==='c') {
-			return this._validateCollectionSemantics(input, options)
-		}
-		else {
-			return this._getReturnObj(true,"Validation successful",{});
-		}
-	},
-
-	_getReturnObj: function(status,message,error, object) {
-		return {
-				"status": status,
-				"message": message,
-				"error": error,
-				"finalObject": object
-		};
-	},
-
-	printError: function(str) {
-		process.stdout.write(str);
-		process.exit(1);
-	},
-
-	_loadJSONfile: function(filename, encoding) {
-		if(!fs.existsSync(filename)) {
-			throw "File " + filename+" not found";
-		}
-		var contents=null;
-		try {
-			if (typeof (encoding) == 'undefined') encoding = 'utf8';
-			var contents = fs.readFileSync(filename, encoding);
-		} catch (err) {
-			throw "Error reading file: " + err.message;
-		}
-
-		try {
-			return JSON.parse(contents);
-		} catch(err) {
-			throw "Unable to parse JSON";
-		}
-	},
-
-
-	_validateCollectionSemantics: function(json, options) {
-		var correctDuplicates = !!(options && options.correctDuplicates);
-		var duplicatesPresent = false;
-
-		var ro = {
-			"status": true,
-			"message": "Valid Collection",
-			"error": null,
-			"finalObject": null
-		};
-
-		//must have a root id
-		if(!json.hasOwnProperty("id")) {
-			return this._getReturnObj(false, "Must have  a collection ID", {});
-		}
-
-		if(!json.hasOwnProperty("requests") || !(json.requests instanceof Array)) {
-			return this._getReturnObj(false, "Requests[] must be present in the collection");
-		}
-		var requests = json.requests;
-		var numRequest = json.requests.length;
-
-		var collectionId = json.id;
-
-		var order = json.order;
-		if(order) {
-			if (!(order instanceof Array)) {
-				return this._getReturnObj(false, "Order must be an array")
-			}
-		}
-		else {
-			if(json.hasOwnProperty("folders")) {
-				return this._getReturnObj(false, "Order[] must be present in the collection");
-			}
-			else {
-				//old style collection
-				console.log("Old style collection...adding requests to order");
-				json.order = [];
-				for(var i=0;i<numRequest;i++) {
-					json.order.push(requests[i].id);
-				}
-				order = json.order;
-			}
-		}
-
-		var rootOrder = order;
-
-		var totalOrder = _.clone(order);
-
-		var allOrders = [order];
-
-
-		var requestIds = [];
-		if(requests) {
-			if (!(requests instanceof Array)) {
-				return this._getReturnObj(false, "Requests must be an array")
-			}
-
-			for(var i=0;i<numRequest;i++) {
-				delete requests[i].folderId; //this is not supported at all!
-				delete requests[i].collectionRequestId; //this is not supported at all!
-				delete requests[i].collection; //this is not supported at all!
-				if(!requests[i].hasOwnProperty("id") || (typeof requests[i].id !== "string")) return this._getReturnObj(false, "Each request must have an ID (string)");
-				if(!requests[i].hasOwnProperty("collectionId") || (typeof requests[i].collectionId !== "string")) return this._getReturnObj(false, "Each request must have a collectionId field");
-				if(requests[i].collectionId !== collectionId) return this._getReturnObj(false, "Each request must have the same collectionId as the root collection object");
-				if(_.intersection([requests[i].id],requestIds).length!==0) {
-					duplicatesPresent = true;
-				}
-				requestIds.push(requests[i].id);
-			}
-		}
-		else {
-			return this._getReturnObj(false, "Requests[] must be present in the collection");
-		}
-
-		//go through totalOrder
-		//if any request is not there in request IDs, remove it from order
-		var toLength = totalOrder.length;
-		for(var i=0;i<toLength;i++) {
-			if(requestIds.indexOf(totalOrder[i])===-1) {
-				totalOrder.splice(i,1);
-				order.splice(i,1);
-				toLength--;
-				i--;
-			}
-		}
-
-		var folders = json.folders;
-		if(folders) {
-			if(!(folders instanceof Array)) {
-				return this._getReturnObj(false, "Folders must be an array")
-			}
-
-			var numFolder = folders.length;
-			for(var i=0;i<numFolder;i++) {
-				if(!folders[i].hasOwnProperty("id") || (typeof folders[i].id !== "string")) return this._getReturnObj(false, "Each folder must have an ID (String)");
-				if(!folders[i].hasOwnProperty("order") || !(folders[i].order instanceof Array)) return this._getReturnObj(false, "Each folder must have an order[] field");
-				if(_.intersection(folders[i].order,totalOrder).length!==0){
-					duplicatesPresent = true;
-				}
-
-				//go through the folder order
-				//if there are any IDs not present in the requests array, remove
-				var orderLength = (folders[i].order)?folders[i].order.length:0;
-				var j;
-				for(j=0;j<orderLength;j++) {
-					if(requestIds.indexOf(folders[i].order[j]) == -1) {
-						folders[i].order.splice(j,1);
-						orderLength--;
-						j--;
-					}
-				}
-
-				totalOrder = totalOrder.concat(folders[i].order);
-				allOrders.push(folders[i].order);
-			}
-		}
-
-
-		//check for request duplication across orders
-		if(duplicatesPresent) {
-			if(correctDuplicates) {
-				var numOrders = allOrders.length;
-				var j;
-				for(var i=0;i<numOrders-1;i++) {
-					for(j=i+1;j<numOrders;j++) {
-						var intersection = _.intersection(allOrders[i],allOrders[j]);
-						var numIntersections = intersection.length;
-						if(intersection.length!==0) {
-							for(var sec=0;sec<numIntersections;sec++) {
-								var indexToSplice = allOrders[j].indexOf(intersection[sec]);
-								allOrders[j].splice(indexToSplice,1);
-							}
-						}
-					}
-				}
-			}
-			else {
-				return this._getReturnObj(false, "Request IDs cannot be duplicated");
-			}
-		}
-
-		var diff = _.difference(requestIds, totalOrder);
-		if(diff.length!==0) {
-			if(correctDuplicates) {
-				console.log("Adding extra requests to root order");
-				json.order = json.order.concat(diff);
-			}
-			else {
-				var extraRequests = diff.join(", ");
-				return this._getReturnObj(false, "Request count not matching. "+extraRequests+" are defined, but not present in any order array");
-			}
-		}
-
-		diff = _.difference(totalOrder, requestIds);
-		if(diff.length!==0) {
-			var missing = diff.join(", ");
-			return this._getReturnObj(false, "Request count not matching. "+missing+" are included in the order, but are not defined");
-		}
-
-		ro.finalObject = json;
-
-		return ro;
-
-	}
-
-});
-
-module.exports = postman_validator;
-
-},{"./json-schemas/collection.schema.json":234,"./json-schemas/environment.schema.json":235,"./json-schemas/globals.schema.json":236,"JSV":11,"commander":18,"fs":undefined,"jsface":149,"lodash":179}],238:[function(require,module,exports){
+},{}],226:[function(require,module,exports){
 'use strict';
 module.exports = function (url) {
 	if (typeof url !== 'string') {
@@ -95064,7 +87458,7 @@ module.exports = function (url) {
 	return url.replace(/^(?!(?:\w+:)?\/\/)/, 'http://');
 };
 
-},{}],239:[function(require,module,exports){
+},{}],227:[function(require,module,exports){
 'use strict';
 
 if (!process.version ||
@@ -95110,7 +87504,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 }
 
 
-},{}],240:[function(require,module,exports){
+},{}],228:[function(require,module,exports){
 // vim:ts=4:sts=4:sw=4:
 /*!
  *
@@ -97049,7 +89443,7 @@ return Q;
 
 });
 
-},{}],241:[function(require,module,exports){
+},{}],229:[function(require,module,exports){
 (function() {
   var MarkedYAMLError, events, nodes, raml, url, util, _ref,
     __hasProp = {}.hasOwnProperty,
@@ -97282,7 +89676,7 @@ return Q;
 
 }).call(this);
 
-},{"./errors":243,"./events":244,"./nodes":247,"./raml":250,"./util":260,"url":undefined}],242:[function(require,module,exports){
+},{"./errors":231,"./events":232,"./nodes":235,"./raml":238,"./util":248,"url":undefined}],230:[function(require,module,exports){
 (function() {
   var MarkedYAMLError, nodes, util, _ref, _ref1,
     __hasProp = {}.hasOwnProperty,
@@ -97847,7 +90241,7 @@ return Q;
 
 }).call(this);
 
-},{"./errors":243,"./nodes":247,"./util":260}],243:[function(require,module,exports){
+},{"./errors":231,"./nodes":235,"./util":248}],231:[function(require,module,exports){
 (function() {
   var NON_PRINTABLE, _ref,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
@@ -97998,7 +90392,7 @@ return Q;
 
 }).call(this);
 
-},{"./util":260}],244:[function(require,module,exports){
+},{"./util":248}],232:[function(require,module,exports){
 (function() {
   var _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6,
     __hasProp = {}.hasOwnProperty,
@@ -98188,7 +90582,7 @@ return Q;
 
 }).call(this);
 
-},{}],245:[function(require,module,exports){
+},{}],233:[function(require,module,exports){
 (function() {
   var MarkedYAMLError, nodes, _ref,
     __hasProp = {}.hasOwnProperty,
@@ -98298,7 +90692,7 @@ return Q;
 
 }).call(this);
 
-},{"./errors":243,"./nodes":247}],246:[function(require,module,exports){
+},{"./errors":231,"./nodes":235}],234:[function(require,module,exports){
 (function() {
   var composer, construct, joiner, parser, protocols, reader, resolver, scanner, schemas, securitySchemes, traits, transformations, types, util, validator;
 
@@ -98413,7 +90807,7 @@ return Q;
 
 }).call(this);
 
-},{"./composer":241,"./construct":242,"./joiner":245,"./parser":248,"./protocols":249,"./reader":251,"./resolver":252,"./resourceTypes":253,"./scanner":254,"./schemas":255,"./securitySchemes":256,"./traits":258,"./transformations":259,"./util":260,"./validator":261}],247:[function(require,module,exports){
+},{"./composer":229,"./construct":230,"./joiner":233,"./parser":236,"./protocols":237,"./reader":239,"./resolver":240,"./resourceTypes":241,"./scanner":242,"./schemas":243,"./securitySchemes":244,"./traits":246,"./transformations":247,"./util":248,"./validator":249}],235:[function(require,module,exports){
 (function() {
   var MarkedYAMLError, unique_id, _ref, _ref1, _ref2,
     __hasProp = {}.hasOwnProperty,
@@ -98730,7 +91124,7 @@ return Q;
 
 }).call(this);
 
-},{"./errors":243}],248:[function(require,module,exports){
+},{"./errors":231}],236:[function(require,module,exports){
 (function() {
   var MarkedYAMLError, events, tokens, _ref,
     __hasProp = {}.hasOwnProperty,
@@ -99341,7 +91735,7 @@ return Q;
 
 }).call(this);
 
-},{"./errors":243,"./events":244,"./tokens":257}],249:[function(require,module,exports){
+},{"./errors":231,"./events":232,"./tokens":245}],237:[function(require,module,exports){
 (function() {
   var MarkedYAMLError, nodes, url, util,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
@@ -99422,7 +91816,7 @@ return Q;
 
 }).call(this);
 
-},{"./errors":243,"./nodes":247,"./util":260,"url":undefined}],250:[function(require,module,exports){
+},{"./errors":231,"./nodes":235,"./util":248,"url":undefined}],238:[function(require,module,exports){
 (function() {
   var defaultSettings, nodes, path, refParser, util, _ref,
     __hasProp = {}.hasOwnProperty,
@@ -99923,7 +92317,7 @@ return Q;
 
 }).call(this);
 
-},{"./errors":243,"./loader":246,"./nodes":247,"./util":260,"fs":undefined,"got":79,"json-schema-ref-parser":154,"path":undefined,"q":240,"url":undefined}],251:[function(require,module,exports){
+},{"./errors":231,"./loader":234,"./nodes":235,"./util":248,"fs":undefined,"got":72,"json-schema-ref-parser":146,"path":undefined,"q":228,"url":undefined}],239:[function(require,module,exports){
 (function() {
   var Mark, MarkedYAMLError, NON_PRINTABLE, _ref, _ref1,
     __hasProp = {}.hasOwnProperty,
@@ -100024,7 +92418,7 @@ return Q;
 
 }).call(this);
 
-},{"./errors":243,"./util":260}],252:[function(require,module,exports){
+},{"./errors":231,"./util":248}],240:[function(require,module,exports){
 (function() {
   var YAMLError, nodes, util, _ref, _ref1,
     __hasProp = {}.hasOwnProperty,
@@ -100233,7 +92627,7 @@ return Q;
 
 }).call(this);
 
-},{"./errors":243,"./nodes":247,"./util":260}],253:[function(require,module,exports){
+},{"./errors":231,"./nodes":235,"./util":248}],241:[function(require,module,exports){
 (function() {
   var MarkedYAMLError, nodes, util, _ref,
     __hasProp = {}.hasOwnProperty,
@@ -100422,7 +92816,7 @@ return Q;
 
 }).call(this);
 
-},{"./errors":243,"./nodes":247,"./util":260}],254:[function(require,module,exports){
+},{"./errors":231,"./nodes":235,"./util":248}],242:[function(require,module,exports){
 (function() {
   var MarkedYAMLError, SimpleKey, tokens, util, _ref,
     __hasProp = {}.hasOwnProperty,
@@ -101927,7 +94321,7 @@ return Q;
 
 }).call(this);
 
-},{"./errors":243,"./tokens":257,"./util":260}],255:[function(require,module,exports){
+},{"./errors":231,"./tokens":245,"./util":248}],243:[function(require,module,exports){
 (function() {
   var MarkedYAMLError, nodes, _ref,
     __hasProp = {}.hasOwnProperty,
@@ -102028,7 +94422,7 @@ return Q;
 
 }).call(this);
 
-},{"./errors":243,"./nodes":247}],256:[function(require,module,exports){
+},{"./errors":231,"./nodes":235}],244:[function(require,module,exports){
 (function() {
   var MarkedYAMLError, nodes, _ref,
     __hasProp = {}.hasOwnProperty,
@@ -102100,7 +94494,7 @@ return Q;
 
 }).call(this);
 
-},{"./errors":243,"./nodes":247}],257:[function(require,module,exports){
+},{"./errors":231,"./nodes":235}],245:[function(require,module,exports){
 (function() {
   var _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9,
     __hasProp = {}.hasOwnProperty,
@@ -102407,7 +94801,7 @@ return Q;
 
 }).call(this);
 
-},{}],258:[function(require,module,exports){
+},{}],246:[function(require,module,exports){
 (function() {
   var MarkedYAMLError, nodes, pluralize, util, _ref, _ref1,
     __hasProp = {}.hasOwnProperty,
@@ -102665,7 +95059,7 @@ return Q;
 
 }).call(this);
 
-},{"./errors":243,"./nodes":247,"./util":260,"pluralize":191}],259:[function(require,module,exports){
+},{"./errors":231,"./nodes":235,"./util":248,"pluralize":183}],247:[function(require,module,exports){
 (function() {
   var nodes, uritemplate, util,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
@@ -103182,7 +95576,7 @@ return Q;
 
 }).call(this);
 
-},{"./nodes":247,"./util":260,"uritemplate":291}],260:[function(require,module,exports){
+},{"./nodes":235,"./util":248,"uritemplate":279}],248:[function(require,module,exports){
 (function() {
   var objectAssign,
     __slice = [].slice,
@@ -103296,7 +95690,7 @@ return Q;
 
 }).call(this);
 
-},{"object-assign":188}],261:[function(require,module,exports){
+},{"object-assign":180}],249:[function(require,module,exports){
 (function() {
   var MarkedYAMLError, jju, nodes, traits, uritemplate, url, util, _ref,
     __hasProp = {}.hasOwnProperty,
@@ -104834,7 +97228,7 @@ return Q;
 
 }).call(this);
 
-},{"./errors":243,"./nodes":247,"./traits":258,"./util":260,"jju/lib/parse":117,"uritemplate":291,"url":undefined}],262:[function(require,module,exports){
+},{"./errors":231,"./nodes":235,"./traits":246,"./util":248,"jju/lib/parse":110,"uritemplate":279,"url":undefined}],250:[function(require,module,exports){
 'use strict';
 
 const ret    = require('ret');
@@ -105099,7 +97493,7 @@ module.exports = class RandExp {
   }
 };
 
-},{"drange":44,"ret":275}],263:[function(require,module,exports){
+},{"drange":37,"ret":263}],251:[function(require,module,exports){
 'use strict';
 
 module.exports = function read(stream, options, cb) {
@@ -105144,7 +97538,7 @@ module.exports = function read(stream, options, cb) {
 	});
 };
 
-},{}],264:[function(require,module,exports){
+},{}],252:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -105269,7 +97663,7 @@ function forEach(xs, f) {
     f(xs[i], i);
   }
 }
-},{"./_stream_readable":266,"./_stream_writable":268,"core-util-is":19,"inherits":272,"process-nextick-args":239}],265:[function(require,module,exports){
+},{"./_stream_readable":254,"./_stream_writable":256,"core-util-is":12,"inherits":260,"process-nextick-args":227}],253:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -105317,7 +97711,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":267,"core-util-is":19,"inherits":272}],266:[function(require,module,exports){
+},{"./_stream_transform":255,"core-util-is":12,"inherits":260}],254:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -106333,7 +98727,7 @@ function indexOf(xs, x) {
   }
   return -1;
 }
-},{"./_stream_duplex":264,"./internal/streams/BufferList":269,"./internal/streams/destroy":270,"./internal/streams/stream":271,"core-util-is":19,"events":undefined,"inherits":272,"isarray":116,"process-nextick-args":239,"safe-buffer":280,"string_decoder/":287,"util":undefined}],267:[function(require,module,exports){
+},{"./_stream_duplex":252,"./internal/streams/BufferList":257,"./internal/streams/destroy":258,"./internal/streams/stream":259,"core-util-is":12,"events":undefined,"inherits":260,"isarray":109,"process-nextick-args":227,"safe-buffer":268,"string_decoder/":275,"util":undefined}],255:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -106548,7 +98942,7 @@ function done(stream, er, data) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":264,"core-util-is":19,"inherits":272}],268:[function(require,module,exports){
+},{"./_stream_duplex":252,"core-util-is":12,"inherits":260}],256:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -107226,7 +99620,7 @@ Writable.prototype._destroy = function (err, cb) {
   this.end();
   cb(err);
 };
-},{"./_stream_duplex":264,"./internal/streams/destroy":270,"./internal/streams/stream":271,"core-util-is":19,"inherits":272,"process-nextick-args":239,"safe-buffer":280,"util-deprecate":292}],269:[function(require,module,exports){
+},{"./_stream_duplex":252,"./internal/streams/destroy":258,"./internal/streams/stream":259,"core-util-is":12,"inherits":260,"process-nextick-args":227,"safe-buffer":268,"util-deprecate":280}],257:[function(require,module,exports){
 'use strict';
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -107306,7 +99700,7 @@ if (util && util.inspect && util.inspect.custom) {
     return this.constructor.name + ' ' + obj;
   };
 }
-},{"safe-buffer":280,"util":undefined}],270:[function(require,module,exports){
+},{"safe-buffer":268,"util":undefined}],258:[function(require,module,exports){
 'use strict';
 
 /*<replacement>*/
@@ -107381,10 +99775,10 @@ module.exports = {
   destroy: destroy,
   undestroy: undestroy
 };
-},{"process-nextick-args":239}],271:[function(require,module,exports){
+},{"process-nextick-args":227}],259:[function(require,module,exports){
 module.exports = require('stream');
 
-},{"stream":undefined}],272:[function(require,module,exports){
+},{"stream":undefined}],260:[function(require,module,exports){
 try {
   var util = require('util');
   if (typeof util.inherits !== 'function') throw '';
@@ -107393,7 +99787,7 @@ try {
   module.exports = require('./inherits_browser.js');
 }
 
-},{"./inherits_browser.js":273,"util":undefined}],273:[function(require,module,exports){
+},{"./inherits_browser.js":261,"util":undefined}],261:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -107418,7 +99812,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],274:[function(require,module,exports){
+},{}],262:[function(require,module,exports){
 var Stream = require('stream');
 if (process.env.READABLE_STREAM === 'disable' && Stream) {
   module.exports = Stream;
@@ -107439,7 +99833,7 @@ if (process.env.READABLE_STREAM === 'disable' && Stream) {
   exports.PassThrough = require('./lib/_stream_passthrough.js');
 }
 
-},{"./lib/_stream_duplex.js":264,"./lib/_stream_passthrough.js":265,"./lib/_stream_readable.js":266,"./lib/_stream_transform.js":267,"./lib/_stream_writable.js":268,"stream":undefined}],275:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":252,"./lib/_stream_passthrough.js":253,"./lib/_stream_readable.js":254,"./lib/_stream_transform.js":255,"./lib/_stream_writable.js":256,"stream":undefined}],263:[function(require,module,exports){
 const util      = require('./util');
 const types     = require('./types');
 const sets      = require('./sets');
@@ -107723,14 +100117,14 @@ module.exports = (regexpStr) => {
 
 module.exports.types = types;
 
-},{"./positions":276,"./sets":277,"./types":278,"./util":279}],276:[function(require,module,exports){
+},{"./positions":264,"./sets":265,"./types":266,"./util":267}],264:[function(require,module,exports){
 const types = require('./types');
 exports.wordBoundary = () => ({ type: types.POSITION, value: 'b' });
 exports.nonWordBoundary = () => ({ type: types.POSITION, value: 'B' });
 exports.begin = () => ({ type: types.POSITION, value: '^' });
 exports.end = () => ({ type: types.POSITION, value: '$' });
 
-},{"./types":278}],277:[function(require,module,exports){
+},{"./types":266}],265:[function(require,module,exports){
 const types = require('./types');
 
 const INTS = () => [{ type: types.RANGE , from: 48, to: 57 }];
@@ -107781,7 +100175,7 @@ exports.whitespace = () => ({ type: types.SET, set: WHITESPACE(), not: false });
 exports.notWhitespace = () => ({ type: types.SET, set: WHITESPACE(), not: true });
 exports.anyChar = () => ({ type: types.SET, set: NOTANYCHAR(), not: true });
 
-},{"./types":278}],278:[function(require,module,exports){
+},{"./types":266}],266:[function(require,module,exports){
 module.exports = {
   ROOT       : 0,
   GROUP      : 1,
@@ -107793,7 +100187,7 @@ module.exports = {
   CHAR       : 7,
 };
 
-},{}],279:[function(require,module,exports){
+},{}],267:[function(require,module,exports){
 const types = require('./types');
 const sets  = require('./sets');
 
@@ -107903,7 +100297,7 @@ exports.error = (regexp, msg) => {
   throw new SyntaxError('Invalid regular expression: /' + regexp + '/: ' + msg);
 };
 
-},{"./sets":277,"./types":278}],280:[function(require,module,exports){
+},{"./sets":265,"./types":266}],268:[function(require,module,exports){
 /* eslint-disable node/no-deprecated-api */
 var buffer = require('buffer')
 var Buffer = buffer.Buffer
@@ -107967,7 +100361,7 @@ SafeBuffer.allocUnsafeSlow = function (size) {
   return buffer.SlowBuffer(size)
 }
 
-},{"buffer":undefined}],281:[function(require,module,exports){
+},{"buffer":undefined}],269:[function(require,module,exports){
 var htmlparser = require('htmlparser2');
 var extend = require('xtend');
 var quoteRegexp = require('lodash.escaperegexp');
@@ -108382,7 +100776,7 @@ sanitizeHtml.simpleTransform = function(newTagName, newAttribs, merge) {
   };
 };
 
-},{"htmlparser2":89,"lodash.escaperegexp":178,"srcset":283,"xtend":294}],282:[function(require,module,exports){
+},{"htmlparser2":82,"lodash.escaperegexp":170,"srcset":271,"xtend":282}],270:[function(require,module,exports){
 exports = module.exports = SemVer;
 
 // The debug function is excluded entirely from the minified version.
@@ -109680,7 +102074,7 @@ function intersects(r1, r2, loose) {
   return r1.intersects(r2)
 }
 
-},{}],283:[function(require,module,exports){
+},{}],271:[function(require,module,exports){
 'use strict';
 var numberIsNan = require('number-is-nan');
 var arrayUniq = require('array-uniq');
@@ -109745,7 +102139,7 @@ exports.stringify = function (arr) {
 	})).join(', ');
 }
 
-},{"array-uniq":13,"number-is-nan":187}],284:[function(require,module,exports){
+},{"array-uniq":7,"number-is-nan":179}],272:[function(require,module,exports){
 module.exports={
   "100": "Continue",
   "101": "Switching Protocols",
@@ -109812,7 +102206,7 @@ module.exports={
   "511": "Network Authentication Required"
 }
 
-},{}],285:[function(require,module,exports){
+},{}],273:[function(require,module,exports){
 /*!
  * statuses
  * Copyright(c) 2014 Jonathan Ong
@@ -109927,7 +102321,7 @@ function status (code) {
   return n
 }
 
-},{"./codes.json":284}],286:[function(require,module,exports){
+},{"./codes.json":272}],274:[function(require,module,exports){
 module.exports = shift
 
 function shift (stream) {
@@ -109949,7 +102343,7 @@ function getStateLength (state) {
   return state.length
 }
 
-},{}],287:[function(require,module,exports){
+},{}],275:[function(require,module,exports){
 'use strict';
 
 var Buffer = require('safe-buffer').Buffer;
@@ -110222,7 +102616,7 @@ function simpleWrite(buf) {
 function simpleEnd(buf) {
   return buf && buf.length ? this.write(buf) : '';
 }
-},{"safe-buffer":280}],288:[function(require,module,exports){
+},{"safe-buffer":268}],276:[function(require,module,exports){
 'use strict';
 const os = require('os');
 const hasFlag = require('has-flag');
@@ -110339,7 +102733,7 @@ if ('FORCE_COLOR' in env) {
 
 module.exports = process && support(supportLevel);
 
-},{"has-flag":81,"os":undefined}],289:[function(require,module,exports){
+},{"has-flag":74,"os":undefined}],277:[function(require,module,exports){
 'use strict';
 
 module.exports = function (req, time) {
@@ -110375,7 +102769,7 @@ module.exports = function (req, time) {
 		.on('error', clear);
 };
 
-},{}],290:[function(require,module,exports){
+},{}],278:[function(require,module,exports){
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved.
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use
@@ -110618,7 +103012,7 @@ var __importDefault;
     exporter("__importDefault", __importDefault);
 });
 
-},{}],291:[function(require,module,exports){
+},{}],279:[function(require,module,exports){
 /*global unescape, module, define, window, global*/
 
 /*
@@ -111505,7 +103899,7 @@ var UriTemplate = (function () {
     }
 ));
 
-},{}],292:[function(require,module,exports){
+},{}],280:[function(require,module,exports){
 
 /**
  * For Node.js, simply re-export the core `util.deprecate` function.
@@ -111513,7 +103907,7 @@ var UriTemplate = (function () {
 
 module.exports = require('util').deprecate;
 
-},{"util":undefined}],293:[function(require,module,exports){
+},{"util":undefined}],281:[function(require,module,exports){
 // Returns a wrapper function that returns a wrapped callback
 // The wrapper function should do some stuff, and return a
 // presumably different callback function.
@@ -111548,7 +103942,7 @@ function wrappy (fn, cb) {
   }
 }
 
-},{}],294:[function(require,module,exports){
+},{}],282:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
