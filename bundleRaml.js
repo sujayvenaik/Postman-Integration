@@ -68822,7 +68822,7 @@ function plural(ms, n, name) {
           _crypto.getRandomValues(_rnds8);
           return _rnds8;
         };
-        // _rng();
+        _rng();
       } catch(e) {}
     }
 
@@ -68854,7 +68854,7 @@ function plural(ms, n, name) {
       try {
         var _rb = require('crypto').randomBytes;
         _nodeRNG = _rng = _rb && function() {return _rb(16);};
-        // _rng();
+        _rng();
       } catch(e) {}
     }
   }
@@ -68914,8 +68914,7 @@ function plural(ms, n, name) {
   // and http://docs.python.org/library/uuid.html
 
   // random #'s we need to init node and clockseq
-  var _seedBytes;
-  //var _seedBytes = _rng();
+  var _seedBytes = _rng();
 
   // Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
   var _nodeId = [
