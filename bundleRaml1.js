@@ -369,21 +369,21 @@ module.exports = util;
 },{"async":6,"json-schema-faker":92,"lodash":100,"postman-collection":107}],3:[function(require,module,exports){
 
 var postmanSDK = require('postman-collection'),
-		util = require('./util.js'),
-        jsf = require('json-schema-faker');
+		util = require('./util.js');
+        // jsf = require('json-schema-faker');
         
-    var Collection = postmanSDK.Collection,
-    Item = postmanSDK.Item, 
-    ItemGroup = postmanSDK.ItemGroup,
-    Request = postmanSDK.Request,
-		Url = postmanSDK.Url;
+    // var Collection = postmanSDK.Collection,
+    // Item = postmanSDK.Item, 
+    // ItemGroup = postmanSDK.ItemGroup,
+    // Request = postmanSDK.Request,
+	// 	Url = postmanSDK.Url;
 
 module.exports = function (){
     console.log('yes');
     return 'h';
 }
 
-},{"./util.js":2,"json-schema-faker":92,"postman-collection":107}],4:[function(require,module,exports){
+},{"./util.js":2,"postman-collection":107}],4:[function(require,module,exports){
 (function (global){
 /**
  * marked - a markdown parser
