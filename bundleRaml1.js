@@ -72,7 +72,6 @@ block.html = replace(block.html)
   (/tag/g, block._tag)
   ();
 
-  
 block.paragraph = replace(block.paragraph)
   ('hr', block.hr)
   ('heading', block.heading)
